@@ -1,65 +1,563 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+
+export default function HomePage() {
+
+  // BMI STATES
+
+  const [gender, setGender] = useState("male");
+  const [age, setAge] = useState(30);
+
+  const [heightFt, setHeightFt] = useState(5);
+  const [heightIn, setHeightIn] = useState(11.65);
+
+  const [weight, setWeight] = useState(176.4);
+
+  const [bmi, setBmi] = useState(24.2);
+  const [category, setCategory] = useState("Healthy weight");
+
+  // BMI FUNCTION
+
+  const calculateBMI = () => {
+
+    const totalInches =
+      Number(heightFt) * 12 + Number(heightIn);
+
+    const heightMeters = totalInches * 0.0254;
+
+    const weightKg = Number(weight) * 0.453592;
+
+    const bmiValue =
+      weightKg / (heightMeters * heightMeters);
+
+    const finalBMI = Number(bmiValue.toFixed(1));
+
+    setBmi(finalBMI);
+
+    if (finalBMI < 18.5) {
+      setCategory("Underweight");
+    } else if (finalBMI >= 18.5 && finalBMI < 25) {
+      setCategory("Healthy weight");
+    } else if (finalBMI >= 25 && finalBMI < 30) {
+      setCategory("Overweight");
+    } else {
+      setCategory("Obesity");
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+
+    <main className="overflow-hidden bg-[#f6f6f6] text-[#222]">
+
+      {/* HERO */}
+
+      <section className="relative h-[100vh] overflow-hidden">
+
+        <img
+          src="https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?q=80&w=2400&auto=format&fit=crop"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+
+        <div className="absolute inset-0 bg-black/45" />
+
+        <div className="relative z-10 flex h-full items-center justify-center px-4">
+
+          <div className="max-w-7xl text-center">
+
+            <h1 className="text-[42px] font-black uppercase leading-[1] tracking-tight text-white drop-shadow-2xl sm:text-[70px] lg:text-[110px]">
+
+              FITNESS BACKED BY EXPERIENCE
+              <br />
+              & FUELED BY PASSION
+            </h1>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* SERVICES */}
+
+      <section className="py-20 sm:py-24">
+
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+
+          <div className="text-center">
+
+            <h2 className="text-3xl font-black sm:text-5xl">
+              Customized Plan That Give You Best Results
+            </h2>
+          </div>
+
+          <div className="mt-16 grid gap-8 md:grid-cols-2 xl:grid-cols-4">
+
+            {[
+              {
+                title: "Sport Specific Plans",
+                image:
+                  "https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=1200&auto=format&fit=crop",
+                desc:
+                  "Boost your performance with tailored training plans designed for your sport, improving speed, strength, and agility.",
+              },
+
+              {
+                title: "Workout Plans",
+                image:
+                  "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1200&auto=format&fit=crop",
+                desc:
+                  "Customized workout plans to build muscle, burn fat, and stay consistent designed for your goals.",
+              },
+
+              {
+                title: "Nutrition Plans",
+                image:
+                  "https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=1200&auto=format&fit=crop",
+                desc:
+                  "Get a personalized meal plan with the right macros, vitamins, and meal timing.",
+              },
+
+              {
+                title: "1-1 VIP Training",
+                image:
+                  "https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=1200&auto=format&fit=crop",
+                desc:
+                  "Exclusive 1-on-1 coaching with expert guidance, accountability and support.",
+              },
+            ].map((item) => (
+
+              <div
+                key={item.title}
+                className="group flex h-full flex-col overflow-hidden rounded-[32px] bg-white shadow-[0_10px_35px_rgba(0,0,0,0.08)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_55px_rgba(0,0,0,0.12)]"
+              >
+
+                <div className="overflow-hidden">
+
+                  <img
+                    src={item.image}
+                    alt=""
+                    className="h-[320px] w-full object-cover transition duration-700 group-hover:scale-110"
+                  />
+                </div>
+
+                <div className="flex flex-1 flex-col p-6">
+
+                  <div className="min-h-[170px]">
+
+                    <h3 className="text-[28px] font-black leading-tight">
+                      {item.title}
+                    </h3>
+
+                    <p className="mt-4 text-[17px] leading-8 text-[#555]">
+                      {item.desc}
+                    </p>
+                  </div>
+
+                  {/* BUTTON FIXED */}
+
+                  <div className="mt-auto pt-8">
+
+                    <button className="h-[62px] w-full rounded-[18px] bg-black text-[15px] font-black uppercase tracking-[0.18em] text-white transition-all duration-300 hover:scale-[1.02] hover:bg-[#00d26a] hover:text-black">
+
+                      Explore Plan
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </main>
-    </div>
+      </section>
+
+      {/* ABOUT */}
+
+      <section className="bg-white py-20 sm:py-24">
+
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+
+          <div className="text-center">
+
+            <h2 className="text-3xl font-black sm:text-5xl">
+              About DineshSehgal
+            </h2>
+
+            <p className="mx-auto mt-6 max-w-5xl text-[17px] leading-9 text-[#666] sm:text-[20px]">
+
+              At DineshSehgalMe, we simplify fitness for working professionals.
+              Whether you're aiming to lose fat, build muscle, or boost
+              energy, our expert-designed programs fit into your schedule.
+            </p>
+          </div>
+
+          {/* BMI SECTION */}
+
+          <div className="mt-20 grid gap-10 lg:grid-cols-[0.4fr_0.6fr]">
+
+            {/* LEFT */}
+
+            <div className="rounded-[30px] border border-[#e5e5e5] bg-white p-6 shadow-lg sm:p-8">
+
+              <div className="flex items-center gap-4">
+
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#5d4ff3] text-2xl text-white">
+                  ⚕️
+                </div>
+
+                <h2 className="text-3xl font-light sm:text-5xl">
+                  BMI Calculator
+                </h2>
+              </div>
+
+              {/* GENDER */}
+
+              <div className="mt-10">
+
+                <p className="mb-4 text-lg font-semibold">
+                  Gender
+                </p>
+
+                <div className="flex overflow-hidden rounded-2xl border border-[#ddd]">
+
+                  <button
+                    onClick={() => setGender("male")}
+                    className={`flex h-[65px] flex-1 items-center justify-center gap-2 text-lg font-semibold transition-all ${
+                      gender === "male"
+                        ? "bg-[#5d4ff3] text-white"
+                        : "bg-white text-[#222]"
+                    }`}
+                  >
+                    ♂ Male
+                  </button>
+
+                  <button
+                    onClick={() => setGender("female")}
+                    className={`flex h-[65px] flex-1 items-center justify-center gap-2 text-lg font-semibold transition-all ${
+                      gender === "female"
+                        ? "bg-[#5d4ff3] text-white"
+                        : "bg-white text-[#222]"
+                    }`}
+                  >
+                    ♀ Female
+                  </button>
+                </div>
+              </div>
+
+              {/* AGE */}
+
+              <div className="mt-8">
+
+                <p className="mb-4 text-lg font-semibold">
+                  Age
+                </p>
+
+                <input
+                  type="number"
+                  value={age}
+                  onChange={(e) => setAge(Number(e.target.value))}
+                  className="h-[65px] w-full rounded-2xl border border-[#ddd] px-5 text-[20px] outline-none"
+                />
+              </div>
+
+              {/* HEIGHT */}
+
+              <div className="mt-8 grid grid-cols-2 gap-4">
+
+                <div>
+
+                  <p className="mb-4 text-lg font-semibold">
+                    Height (ft)
+                  </p>
+
+                  <input
+                    type="number"
+                    value={heightFt}
+                    onChange={(e) =>
+                      setHeightFt(Number(e.target.value))
+                    }
+                    className="h-[65px] w-full rounded-2xl border border-[#ddd] px-5 text-[20px] outline-none"
+                  />
+                </div>
+
+                <div>
+
+                  <p className="mb-4 text-lg font-semibold">
+                    Height (in)
+                  </p>
+
+                  <input
+                    type="number"
+                    value={heightIn}
+                    onChange={(e) =>
+                      setHeightIn(Number(e.target.value))
+                    }
+                    className="h-[65px] w-full rounded-2xl border border-[#ddd] px-5 text-[20px] outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* WEIGHT */}
+
+              <div className="mt-8">
+
+                <p className="mb-4 text-lg font-semibold">
+                  Weight (pounds)
+                </p>
+
+                <input
+                  type="number"
+                  value={weight}
+                  onChange={(e) =>
+                    setWeight(Number(e.target.value))
+                  }
+                  className="h-[65px] w-full rounded-2xl border border-[#ddd] px-5 text-[20px] outline-none"
+                />
+              </div>
+
+              {/* BUTTON */}
+
+              <button
+                onClick={calculateBMI}
+                className="mt-10 h-[70px] w-full rounded-2xl bg-[#5d4ff3] text-[22px] font-bold text-white transition-all duration-300 hover:scale-[1.02]"
+              >
+                Calculate
+              </button>
+            </div>
+
+            {/* RIGHT */}
+
+            <div className="overflow-hidden rounded-[30px] bg-[#eaf1ff] shadow-lg">
+
+              <div className="bg-[#dce7ff] px-6 py-6">
+
+                <h3 className="text-[18px] font-black uppercase tracking-[0.18em] text-[#5d4ff3]">
+                  BODY MASS INDEX
+                </h3>
+              </div>
+
+              <div className="p-6 sm:p-8">
+
+                {/* BAR */}
+
+                <div className="relative h-4 overflow-hidden rounded-full bg-gradient-to-r from-[#ff7f7f] via-[#a8ff78] to-[#ff7f7f]">
+
+                  <div
+                    className="absolute top-1/2 h-7 w-7 rounded-full border-[4px] border-white bg-[#5d4ff3] shadow-lg"
+                    style={{
+                      left: `${Math.min(
+                        Math.max((bmi / 40) * 100, 5),
+                        95
+                      )}%`,
+                      transform: "translate(-50%, -50%)",
+                    }}
+                  />
+                </div>
+
+                <div className="mt-4 flex justify-between text-[13px] font-semibold text-[#666] sm:text-[15px]">
+
+                  <span>Underweight</span>
+                  <span>Normal</span>
+                  <span>Overweight</span>
+                  <span>Obesity</span>
+                </div>
+
+                {/* TABLE */}
+
+                <div className="mt-10 overflow-hidden rounded-[24px] border border-[#d7dff5]">
+
+                  {[
+                    ["Body Mass Index (BMI)", `${bmi} kg/m²`],
+                    ["BMI Category", category],
+                    ["Healthy BMI range", "18.5 - 25 kg/m²"],
+                    ["Healthy weight", "135.1 lbs - 182.6 lbs"],
+                    ["Gain to BMI 18.5", "-"],
+                    ["Lose to BMI 25", "-"],
+                    ["Ponderal Index", "13.27 kg/m³"],
+                  ].map((item, index) => (
+
+                    <div
+                      key={index}
+                      className="grid grid-cols-2 border-b border-[#d7dff5] last:border-none"
+                    >
+
+                      <div className="bg-[#dce7ff] px-5 py-5 text-[15px] text-[#333] sm:text-[18px]">
+
+                        {item[0]}
+                      </div>
+
+                      <div className="bg-white px-5 py-5 text-[15px] font-semibold sm:text-[18px]">
+
+                        {item[1]}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* WHY CHOOSE */}
+
+          <div className="mt-24 grid gap-14 lg:grid-cols-2">
+
+            <div>
+
+              <h2 className="text-4xl font-black leading-tight sm:text-6xl">
+
+                Why choose DineshSehgal
+              </h2>
+
+              <div className="mt-10 space-y-5">
+
+                {[
+                  "Science-Based Coaching for Real Results",
+                  "Tailored workout plan based on your schedule",
+                  "Custom nutrition built for indian food habits",
+                  "Weekly check-ins for accountability",
+                  "Fatloss that is sustainable",
+                  "Home, gym, or online training options",
+                  "Celebrity trainer & certified nutrition coach",
+                ].map((item) => (
+
+                  <div
+                    key={item}
+                    className="flex items-center gap-4 rounded-2xl bg-[#fafafa] px-5 py-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-lg"
+                  >
+
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#00d26a] text-lg font-black text-black">
+                      ✓
+                    </div>
+
+                    <p className="text-[16px] font-semibold sm:text-[20px]">
+                      {item}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-[34px] shadow-2xl">
+
+              <img
+                src="https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=1600&auto=format&fit=crop"
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* TRANSFORMATION */}
+
+      <section className="py-24">
+
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+
+          <div className="text-center">
+
+            <h2 className="text-4xl font-black sm:text-6xl">
+              Successful Lifestyle Transformation
+            </h2>
+
+            <button className="mt-10 rounded-2xl bg-[#2687ff] px-10 py-5 text-[20px] font-semibold text-white transition-all duration-300 hover:scale-105">
+
+              contact us
+            </button>
+          </div>
+
+          <div className="mt-20 grid gap-8 md:grid-cols-2 xl:grid-cols-4">
+
+            {[1, 2, 3, 4].map((item) => (
+
+              <div
+                key={item}
+                className="overflow-hidden rounded-[28px] bg-white shadow-lg transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl"
+              >
+
+                <img
+                  src={`https://picsum.photos/500/700?random=${item}`}
+                  alt=""
+                  className="h-[340px] w-full object-cover"
+                />
+
+                <div className="p-6">
+
+                  <h3 className="text-[24px] font-black">
+                    Amazing Transformation
+                  </h3>
+
+                  <p className="mt-4 text-[16px] leading-8 text-[#666]">
+
+                    Incredible fatloss and body transformation
+                    through consistency and proper coaching.
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIALS */}
+
+      <section className="bg-white py-24">
+
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+
+          <div className="text-center">
+
+            <h2 className="text-4xl font-black sm:text-6xl">
+              Real People. Real Transformations
+            </h2>
+          </div>
+
+          <div className="mt-20 grid gap-8 md:grid-cols-2 xl:grid-cols-4">
+
+            {[1, 2, 3, 4].map((item) => (
+
+              <div
+                key={item}
+                className="rounded-[30px] bg-[#f7f7f7] p-8 transition-all duration-500 hover:-translate-y-2 hover:shadow-xl"
+              >
+
+                <div className="flex justify-center">
+
+                  <img
+                    src={`https://i.pravatar.cc/200?img=${item + 10}`}
+                    alt=""
+                    className="h-24 w-24 rounded-full object-cover"
+                  />
+                </div>
+
+                <p className="mt-8 text-[20px] font-bold leading-10">
+                  “Amazing experience and incredible support.”
+                </p>
+
+                <div className="mt-5 text-2xl text-[#ffbb00]">
+                  ★★★★★
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+
+      {/* WHATSAPP */}
+
+      <a
+        href="https://wa.me/919999999999"
+        target="_blank"
+        className="fixed bottom-6 right-6 z-[999] flex h-[72px] w-[72px] items-center justify-center rounded-full bg-[#25D366] shadow-[0_12px_30px_rgba(37,211,102,0.5)] transition-all duration-300 hover:scale-110"
+      >
+
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 32 32"
+          className="h-10 w-10 fill-white"
+        >
+          <path d="M16.004 3C8.82 3 3 8.82 3 16.004c0 2.574.754 5.086 2.182 7.238L3 29l5.938-2.143A12.95 12.95 0 0 0 16.004 29C23.18 29 29 23.18 29 15.996 29 8.82 23.18 3 16.004 3Zm0 23.727a10.66 10.66 0 0 1-5.43-1.488l-.387-.23-3.523 1.271 1.146-3.648-.25-.375a10.66 10.66 0 0 1-1.641-5.754c0-5.885 4.789-10.676 10.684-10.676 5.887 0 10.676 4.79 10.676 10.676 0 5.895-4.79 10.684-10.676 10.684Z" />
+        </svg>
+      </a>
+    </main>
   );
 }
