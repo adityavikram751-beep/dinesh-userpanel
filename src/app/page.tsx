@@ -335,30 +335,45 @@ export default function HomePage() {
 
               <div className="p-6 sm:p-8">
 
-                {/* BAR */}
+              {/* BAR */}
 
-                <div className="relative h-4 overflow-hidden rounded-full bg-gradient-to-r from-[#ff7f7f] via-[#a8ff78] to-[#ff7f7f]">
+<div className="relative mt-10 px-2">
 
-                  <div
-                    className="absolute top-1/2 h-7 w-7 rounded-full border-[4px] border-white bg-[#5d4ff3] shadow-lg"
-                    style={{
-                      left: `${Math.min(
-                        Math.max((bmi / 40) * 100, 5),
-                        95
-                      )}%`,
-                      transform: "translate(-50%, -50%)",
-                    }}
-                  />
-                </div>
+  {/* OUTER */}
 
-                <div className="mt-4 flex justify-between text-[13px] font-semibold text-[#666] sm:text-[15px]">
+  <div className="relative h-[22px] overflow-visible rounded-full bg-[#ececec] p-[4px] shadow-inner">
 
-                  <span>Underweight</span>
-                  <span>Normal</span>
-                  <span>Overweight</span>
-                  <span>Obesity</span>
-                </div>
+    {/* GRADIENT */}
 
+    <div className="h-full w-full rounded-full bg-gradient-to-r from-[#ff7b7b] via-[#9dff6b] to-[#ff7b7b]" />
+
+    {/* POINTER */}
+
+    <div
+      className="absolute top-1/2 z-10 h-[32px] w-[32px] rounded-full border-[5px] border-white bg-[#5d4ff3] shadow-[0_0_25px_rgba(93,79,243,0.45)]"
+      style={{
+        left: `${Math.min(
+          Math.max((bmi / 40) * 100, 5),
+          95
+        )}%`,
+        transform: "translate(-50%, -50%)",
+      }}
+    />
+  </div>
+
+  {/* LABELS */}
+
+  <div className="mt-5 flex justify-between text-[11px] font-bold text-[#666] sm:text-[14px]">
+
+    <span>Underweight</span>
+
+    <span>Normal</span>
+
+    <span>Overweight</span>
+
+    <span>Obesity</span>
+  </div>
+</div>
                 {/* TABLE */}
 
                 <div className="mt-10 overflow-hidden rounded-[24px] border border-[#d7dff5]">
@@ -446,58 +461,191 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* TRANSFORMATION */}
+      {/* ================= SUCCESSFUL TRANSFORMATION ================= */}
 
-      <section className="py-24">
+<section className="bg-gradient-to-b from-[#fffaf5] to-[#f8f7ff] py-20 sm:py-28">
 
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+  <div className="mx-auto max-w-7xl px-4 sm:px-6">
 
-          <div className="text-center">
+    {/* HEADING */}
 
-            <h2 className="text-4xl font-black sm:text-6xl">
-              Successful Lifestyle Transformation
-            </h2>
+    <div className="text-center">
 
-            <button className="mt-10 rounded-2xl bg-[#2687ff] px-10 py-5 text-[20px] font-semibold text-white transition-all duration-300 hover:scale-105">
+      <p className="inline-flex rounded-full border border-[#ff8c42]/20 bg-[#ff8c42]/10 px-5 py-2 text-[10px] font-black uppercase tracking-[0.25em] text-[#ff8c42] sm:text-[11px]">
 
-              contact us
-            </button>
+        REAL CLIENT RESULTS
+      </p>
+
+      <h2 className="mt-6 text-[34px] font-black leading-tight text-[#111] sm:text-5xl lg:text-7xl">
+
+        Successful Lifestyle
+        <br />
+        Transformation
+      </h2>
+
+      <p className="mx-auto mt-6 max-w-3xl text-[14px] leading-7 text-[#666] sm:text-[18px] sm:leading-9">
+
+        Real people. Real fat loss.
+        Real body transformations
+        through consistency,
+        nutrition and expert
+        coaching.
+      </p>
+    </div>
+
+    {/* GRID */}
+
+    <div className="mt-16 grid gap-8 md:grid-cols-2 xl:grid-cols-4">
+
+      {[
+        {
+          image:
+            "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?q=80&w=1200&auto=format&fit=crop",
+
+          name:
+            "Rahul Sharma",
+
+          result:
+            "-18 KG Fat Loss",
+        },
+
+        {
+          image:
+            "https://images.unsplash.com/photo-1534367507873-d2d7e24c797f?q=80&w=1200&auto=format&fit=crop",
+
+          name:
+            "Aman Verma",
+
+          result:
+            "Muscle Gain Journey",
+        },
+
+        {
+          image:
+            "https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=1200&auto=format&fit=crop",
+
+          name:
+            "Rohit Singh",
+
+          result:
+            "12 Week Transformation",
+        },
+
+        {
+          image:
+            "https://images.unsplash.com/photo-1546483875-ad9014c88eba?q=80&w=1200&auto=format&fit=crop",
+
+          name:
+            "Vikas Yadav",
+
+          result:
+            "Complete Body Recomp",
+        },
+      ].map((item) => (
+
+        <div
+          key={item.name}
+          className="group overflow-hidden rounded-[32px] border border-[#eee] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.06)] transition-all duration-500 hover:-translate-y-3 hover:border-[#ff8c42]/30 hover:shadow-[0_20px_70px_rgba(255,140,66,0.18)]"
+        >
+
+          {/* IMAGE */}
+
+          <div className="relative overflow-hidden">
+
+            <img
+              src={item.image}
+              alt=""
+              className="h-[300px] w-full object-cover transition duration-700 group-hover:scale-110 sm:h-[420px]"
+            />
+
+            {/* OVERLAY */}
+
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent" />
+
+            {/* VERIFIED */}
+
+            <div className="absolute left-4 top-4 rounded-full bg-white/90 px-4 py-2 shadow-lg backdrop-blur">
+
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#ff8c42]">
+
+                VERIFIED
+              </p>
+            </div>
+
+            {/* RESULT */}
+
+            <div className="absolute bottom-5 left-5">
+
+              <div className="rounded-2xl border border-white/20 bg-white/15 px-5 py-3 backdrop-blur-xl">
+
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#ffd2b1]">
+
+                  TRANSFORMATION
+                </p>
+
+                <h3 className="mt-2 text-[22px] font-black text-white">
+
+                  {item.result}
+                </h3>
+              </div>
+            </div>
           </div>
 
-          <div className="mt-20 grid gap-8 md:grid-cols-2 xl:grid-cols-4">
+          {/* CONTENT */}
 
-            {[1, 2, 3, 4].map((item) => (
+          <div className="p-6">
 
-              <div
-                key={item}
-                className="overflow-hidden rounded-[28px] bg-white shadow-lg transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl"
-              >
+            <h3 className="text-[24px] font-black text-[#111] sm:text-[28px]">
 
-                <img
-                  src={`https://picsum.photos/500/700?random=${item}`}
-                  alt=""
-                  className="h-[340px] w-full object-cover"
-                />
+              {item.name}
+            </h3>
 
-                <div className="p-6">
+            <p className="mt-4 text-[15px] leading-8 text-[#666]">
 
-                  <h3 className="text-[24px] font-black">
-                    Amazing Transformation
-                  </h3>
+              Incredible body
+              transformation through
+              customized workout,
+              nutrition and expert
+              coaching.
+            </p>
 
-                  <p className="mt-4 text-[16px] leading-8 text-[#666]">
+            {/* STATS */}
 
-                    Incredible fatloss and body transformation
-                    through consistency and proper coaching.
-                  </p>
-                </div>
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+
+              <div className="rounded-full bg-[#fff1e7] px-4 py-2 text-[11px] font-black uppercase tracking-[0.15em] text-[#ff8c42]">
+
+                12 WEEKS
               </div>
-            ))}
+
+              <div className="rounded-full bg-[#f5f5f5] px-4 py-2 text-[11px] font-black uppercase tracking-[0.15em] text-[#555]">
+
+                REAL CLIENT
+              </div>
+            </div>
           </div>
         </div>
-      </section>
+      ))}
+    </div>
 
-      {/* TESTIMONIALS */}
+    {/* BUTTON */}
+
+    {/* BUTTON */}
+
+<div className="mt-14 pb-4 flex justify-center">
+
+  <a
+    href="https://wa.me/919999999999"
+    target="_blank"
+    className="flex h-[54px] w-full max-w-[300px] items-center justify-center rounded-[18px] bg-gradient-to-r from-[#ff8c42] to-[#ff6b35] px-5 text-center text-[12px] font-black uppercase tracking-[0.18em] text-white shadow-[0_12px_35px_rgba(255,140,66,0.28)] transition-all duration-300 hover:scale-[1.02] sm:h-[62px] sm:max-w-fit sm:px-10 sm:text-[15px]"
+  >
+    Start Your Transformation
+  </a>
+</div>
+  </div>
+</section>
+
+      {/* TESTIMONIALS
 
       <section className="bg-white py-24">
 
@@ -539,7 +687,7 @@ export default function HomePage() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
 
       {/* WHATSAPP */}
