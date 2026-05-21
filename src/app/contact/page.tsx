@@ -10,19 +10,45 @@ interface ContactData {
   phone?: number;
 }
 
+// ================= WHATSAPP FUNCTION =================
+
+const WHATSAPP_NUMBER = "918175022207";
+
+function getWhatsappUrl() {
+  const message = `Hi DineshSehgal! 👋
+
+I want to contact you regarding fitness coaching.
+
+Please share:
+✅ Pricing
+✅ Workout Plans
+✅ Diet Plans
+✅ Personal Training Details
+
+Thank you 🙌`;
+
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+    message
+  )}`;
+}
+
 export default function ContactPage() {
+
   const [contactData, setContactData] =
     useState<ContactData>({
-      // STATIC DEFAULT DATA
       email: "contact@example.com",
       Address: "123 Main Street, City, State 12345",
       phone: 1234567890,
     });
 
-  // API CALL
+  // ================= API CALL =================
+
   useEffect(() => {
+
     const fetchContact = async () => {
+
       try {
+
         const response = await fetch(
           "https://dinesh-sagel-backend.onrender.com/api/contactUs"
         );
@@ -31,26 +57,35 @@ export default function ContactPage() {
 
         console.log("API DATA => ", data);
 
-        // ARRAY FIRST ITEM
         if (Array.isArray(data) && data.length > 0) {
+
           setContactData({
             email: data[0]?.email,
             Address: data[0]?.Address,
             phone: data[0]?.phone,
           });
+
         }
+
       } catch (error) {
+
         console.log(error);
+
       }
+
     };
 
     fetchContact();
+
   }, []);
 
   return (
     <main className="bg-[#f5f1e8] min-h-screen">
 
+      {/* ================= STYLES ================= */}
+
       <style>{`
+
         .contact-wrap{
           max-width:1100px;
           margin:0 auto;
@@ -143,36 +178,6 @@ export default function ContactPage() {
           border:none;
         }
 
-        /* WHATSAPP */
-
-        .wa-float{
-          position:fixed;
-          right:18px;
-          bottom:18px;
-          width:60px;
-          height:60px;
-          border-radius:50%;
-          background:#25D366;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          box-shadow:0 10px 25px rgba(37,211,102,.35);
-          z-index:999;
-          transition:.25s ease;
-          text-decoration:none;
-        }
-
-        .wa-float:hover{
-          transform:scale(1.08);
-        }
-
-        .wa-icon{
-          width:34px;
-          height:34px;
-        }
-
-        /* TABLET */
-
         @media(max-width:950px){
 
           .contact-grid{
@@ -195,8 +200,6 @@ export default function ContactPage() {
             font-size:18px;
           }
         }
-
-        /* MOBILE */
 
         @media(max-width:640px){
 
@@ -228,36 +231,32 @@ export default function ContactPage() {
             border-radius:14px;
             font-size:20px;
           }
-
-          .wa-float{
-            width:54px;
-            height:54px;
-            right:14px;
-            bottom:14px;
-          }
-
-          .wa-icon{
-            width:30px;
-            height:30px;
-          }
         }
+
       `}</style>
 
-      {/* HERO */}
+      {/* ================= HERO ================= */}
+
       <section className="page-hero px-5 py-20 text-white sm:px-8 lg:px-10">
+
         <div className="mx-auto max-w-7xl text-center">
+
           <h1 className="text-4xl font-black sm:text-5xl">
             Contact Us
           </h1>
+
         </div>
+
       </section>
 
-      {/* CONTACT */}
+      {/* ================= CONTACT ================= */}
+
       <div className="contact-wrap">
 
         <div className="contact-grid">
 
-          {/* LEFT */}
+          {/* ================= LEFT ================= */}
+
           <div className="left-box">
 
             <h2 className="title">
@@ -269,6 +268,7 @@ export default function ContactPage() {
             <div className="info">
 
               {/* ADDRESS */}
+
               <div className="info-item">
 
                 <div className="icon">
@@ -276,6 +276,7 @@ export default function ContactPage() {
                 </div>
 
                 <div>
+
                   <div className="label">
                     Address
                   </div>
@@ -283,10 +284,13 @@ export default function ContactPage() {
                   <div className="text">
                     {contactData?.Address}
                   </div>
+
                 </div>
+
               </div>
 
               {/* PHONE */}
+
               <div className="info-item">
 
                 <div className="icon">
@@ -294,6 +298,7 @@ export default function ContactPage() {
                 </div>
 
                 <div>
+
                   <div className="label">
                     Contact
                   </div>
@@ -301,10 +306,13 @@ export default function ContactPage() {
                   <div className="text">
                     +91 {contactData?.phone}
                   </div>
+
                 </div>
+
               </div>
 
               {/* EMAIL */}
+
               <div className="info-item">
 
                 <div className="icon">
@@ -312,6 +320,7 @@ export default function ContactPage() {
                 </div>
 
                 <div>
+
                   <div className="label">
                     Email
                   </div>
@@ -319,32 +328,44 @@ export default function ContactPage() {
                   <div className="text">
                     {contactData?.email}
                   </div>
+
                 </div>
+
               </div>
+
             </div>
+
           </div>
 
-          {/* MAP */}
+          {/* ================= MAP ================= */}
+
           <div className="map">
+
             <iframe
               src={`https://maps.google.com/maps?q=${encodeURIComponent(
                 contactData?.Address || ""
               )}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
               loading="lazy"
             />
+
           </div>
+
         </div>
+
       </div>
 
-      {/* WHATSAPP FLOAT */}
+      {/* ================= WHATSAPP BUTTON ================= */}
+
       <a
-        href="https://wa.me/919999999999"
+        href={getWhatsappUrl()}
         target="_blank"
+        rel="noopener noreferrer"
         className="fixed bottom-5 right-5 z-50"
       >
+
         <div className="flex h-[70px] w-[70px] items-center justify-center rounded-full bg-[#25D366] shadow-[0_15px_45px_rgba(37,211,102,0.45)] transition duration-300 hover:scale-105">
-          
-          {/* ICON */}
+
+          {/* WHATSAPP ICON */}
 
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -354,8 +375,11 @@ export default function ContactPage() {
           >
             <path d="M16.01 3C8.83 3 3 8.82 3 16c0 2.57.75 5.08 2.16 7.23L3 29l5.93-2.1A12.93 12.93 0 0016.01 29C23.18 29 29 23.18 29 16S23.18 3 16.01 3zm0 23.67c-2.13 0-4.22-.57-6.04-1.65l-.43-.25-3.52 1.25 1.15-3.62-.28-.45A10.58 10.58 0 015.33 16c0-5.89 4.79-10.68 10.68-10.68 2.85 0 5.52 1.11 7.54 3.13A10.59 10.59 0 0126.68 16c0 5.89-4.79 10.67-10.67 10.67zm5.86-7.94c-.32-.16-1.89-.93-2.18-1.04-.29-.11-.5-.16-.71.16-.21.32-.82 1.04-1.01 1.25-.18.21-.37.24-.69.08-.32-.16-1.35-.5-2.57-1.58-.95-.84-1.59-1.88-1.77-2.2-.18-.32-.02-.49.14-.65.14-.14.32-.37.48-.55.16-.18.21-.32.32-.53.11-.21.05-.4-.03-.55-.08-.16-.71-1.72-.98-2.35-.26-.62-.52-.54-.71-.55h-.61c-.21 0-.55.08-.84.4-.29.32-1.11 1.08-1.11 2.64 0 1.55 1.13 3.05 1.29 3.26.16.21 2.22 3.39 5.39 4.75.75.32 1.34.52 1.8.66.75.24 1.44.21 1.98.13.61-.09 1.89-.77 2.15-1.51.27-.74.27-1.38.19-1.51-.08-.13-.29-.21-.61-.37z" />
           </svg>
+
         </div>
+
       </a>
+
     </main>
   );
 }
