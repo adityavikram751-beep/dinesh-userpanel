@@ -90,7 +90,35 @@ const navItems: NavItem[] = [
   },
 ];
 
+// ================= JOIN NOW WHATSAPP =================
+
+function getJoinNowWhatsappUrl() {
+
+  const message = `🔥 Hi DineshSehgal Team! 👋
+
+I want to start my body transformation journey with your coaching.
+
+Please guide me about:
+
+💪 Fat Loss Programs
+🏋️ Muscle Gain Plans
+🥗 Personalized Diet Plans
+📞 Video Consultation
+🔥 Workout Guidance
+⚡ Transformation Support
+💰 Pricing & Packages
+
+I want the best plan according to my goals.
+
+Please share full details 🙌`;
+
+  return `https://wa.me/918585986111?text=${encodeURIComponent(
+    message
+  )}`;
+}
+
 export default function Header() {
+
   const pathname =
     usePathname();
 
@@ -120,54 +148,73 @@ export default function Header() {
       {/* ================= HEADER ================= */}
 
       <header className="sticky top-0 z-50 border-b border-zinc-200/60 bg-white/90 backdrop-blur-2xl">
+
         <nav className="mx-auto flex h-[82px] max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-10">
-          
+
           {/* ================= LOGO ================= */}
 
           <Link
             href="/"
             className="flex items-center gap-3"
           >
+
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-black text-sm font-black text-white shadow-lg">
+
               DS
+
             </div>
 
             <div className="leading-tight">
+
               <h2 className="text-lg font-black uppercase tracking-wide">
+
                 Dinesh
                 <span className="text-lime-500">
+
                   Sehgal
+
                 </span>
+
               </h2>
 
               <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-500">
+
                 Fitness Coach
+
               </p>
+
             </div>
+
           </Link>
 
           {/* ================= DESKTOP MENU ================= */}
 
           <div className="hidden items-center gap-8 lg:flex">
+
             {navItems.map((item) => {
+
               // ================= DROPDOWN =================
 
               if (
                 "dropdown" in item
               ) {
+
                 return (
+
                   <div
                     key={
                       item.label
                     }
                     className="relative"
                   >
+
                     {/* BUTTON */}
 
                     <button
                       onClick={(
                         e
                       ) => {
+
                         e.stopPropagation();
 
                         setDropdownOpen(
@@ -180,6 +227,7 @@ export default function Header() {
                           : "text-zinc-800 hover:text-orange-500"
                       }`}
                     >
+
                       {
                         item.label
                       }
@@ -198,12 +246,15 @@ export default function Header() {
                           2.5
                         }
                       >
+
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           d="M19 9l-7 7-7-7"
                         />
+
                       </svg>
+
                     </button>
 
                     {/* ================= DROPDOWN ================= */}
@@ -218,26 +269,34 @@ export default function Header() {
                           : "invisible -translate-y-2 opacity-0"
                       }`}
                     >
+
                       {/* TOP */}
 
                       <div className="border-b border-zinc-100 px-5 py-4">
+
                         <h3 className="text-xl font-black text-zinc-900">
+
                           Online Training
+
                         </h3>
+
                       </div>
 
                       {/* ITEMS */}
 
                       <div className="p-2">
+
                         {item.dropdown.map(
                           (
                             subItem
                           ) => {
+
                             const isActive =
                               pathname ===
                               subItem.href;
 
                             return (
+
                               <Link
                                 key={
                                   subItem.href
@@ -256,15 +315,19 @@ export default function Header() {
                                     : "hover:bg-zinc-100"
                                 }`}
                               >
+
                                 {/* ACTIVE BAR */}
 
                                 {isActive && (
+
                                   <div className="absolute left-0 top-0 h-full w-1 rounded-r-full bg-orange-500" />
+
                                 )}
 
                                 {/* LEFT */}
 
                                 <div className="flex items-center gap-3">
+
                                   {/* ICON */}
 
                                   <div
@@ -274,14 +337,17 @@ export default function Header() {
                                         : "bg-zinc-100"
                                     }`}
                                   >
+
                                     {
                                       subItem.icon
                                     }
+
                                   </div>
 
                                   {/* TEXT */}
 
                                   <div>
+
                                     <h4
                                       className={`text-[15px] font-black ${
                                         isActive
@@ -289,9 +355,11 @@ export default function Header() {
                                           : "text-zinc-900"
                                       }`}
                                     >
+
                                       {
                                         subItem.label
                                       }
+
                                     </h4>
 
                                     <p
@@ -301,11 +369,15 @@ export default function Header() {
                                           : "text-zinc-500"
                                       }`}
                                     >
+
                                       {
                                         subItem.desc
                                       }
+
                                     </p>
+
                                   </div>
+
                                 </div>
 
                                 {/* RIGHT */}
@@ -317,14 +389,20 @@ export default function Header() {
                                       : "bg-zinc-100 text-zinc-500"
                                   }`}
                                 >
+
                                   →
+
                                 </div>
+
                               </Link>
                             );
                           }
                         )}
+
                       </div>
+
                     </div>
+
                   </div>
                 );
               }
@@ -332,6 +410,7 @@ export default function Header() {
               // ================= NORMAL LINKS =================
 
               return (
+
                 <Link
                   key={item.href}
                   href={item.href}
@@ -342,12 +421,16 @@ export default function Header() {
                       : "text-zinc-800 hover:text-orange-500"
                   }`}
                 >
+
                   {item.label}
 
                   {pathname ===
                     item.href && (
+
                     <span className="absolute -bottom-2 left-0 h-[2px] w-full bg-orange-500" />
+
                   )}
+
                 </Link>
               );
             })}
@@ -355,12 +438,16 @@ export default function Header() {
             {/* CTA */}
 
             <a
-              href="https://wa.me/918585986111"
+              href={getJoinNowWhatsappUrl()}
               target="_blank"
+              rel="noopener noreferrer"
               className="rounded-2xl bg-black px-6 py-3 text-sm font-black text-white shadow-lg transition duration-300 hover:scale-105 hover:bg-zinc-800"
             >
+
               Join Now
+
             </a>
+
           </div>
 
           {/* ================= MOBILE BUTTON ================= */}
@@ -373,10 +460,13 @@ export default function Header() {
             }
             className="flex h-11 w-11 items-center justify-center rounded-full border border-zinc-300 text-xl lg:hidden"
           >
+
             {menuOpen
               ? "✕"
               : "☰"}
+
           </button>
+
         </nav>
 
         {/* ================= MOBILE MENU ================= */}
@@ -388,18 +478,24 @@ export default function Header() {
               : "max-h-0"
           }`}
         >
+
           <div className="flex flex-col gap-3 px-5">
+
             {navItems.map((item) => {
+
               if (
                 "dropdown" in item
               ) {
+
                 return (
+
                   <div
                     key={
                       item.label
                     }
                     className="overflow-hidden rounded-[24px] border border-zinc-200 bg-zinc-50"
                   >
+
                     {/* BUTTON */}
 
                     <button
@@ -410,6 +506,7 @@ export default function Header() {
                       }
                       className="flex w-full items-center justify-between px-5 py-5 text-sm font-black tracking-[0.14em]"
                     >
+
                       {
                         item.label
                       }
@@ -428,12 +525,15 @@ export default function Header() {
                           2.5
                         }
                       >
+
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           d="M19 9l-7 7-7-7"
                         />
+
                       </svg>
+
                     </button>
 
                     {/* ================= MOBILE ITEMS ================= */}
@@ -445,17 +545,22 @@ export default function Header() {
                           : "grid-rows-[0fr]"
                       }`}
                     >
+
                       <div className="overflow-hidden">
+
                         <div className="space-y-3 border-t border-zinc-200 p-3">
+
                           {item.dropdown.map(
                             (
                               subItem
                             ) => {
+
                               const isActive =
                                 pathname ===
                                 subItem.href;
 
                               return (
+
                                 <Link
                                   key={
                                     subItem.href
@@ -464,6 +569,7 @@ export default function Header() {
                                     subItem.href
                                   }
                                   onClick={() => {
+
                                     setMenuOpen(
                                       false
                                     );
@@ -478,10 +584,13 @@ export default function Header() {
                                       : "border-zinc-200 bg-white"
                                   }`}
                                 >
+
                                   {/* ACTIVE BAR */}
 
                                   {isActive && (
+
                                     <div className="absolute left-0 top-0 h-full w-1 rounded-r-full bg-orange-500" />
+
                                   )}
 
                                   {/* ICON */}
@@ -493,14 +602,17 @@ export default function Header() {
                                         : "bg-zinc-100"
                                     }`}
                                   >
+
                                     {
                                       subItem.icon
                                     }
+
                                   </div>
 
                                   {/* TEXT */}
 
                                   <div className="flex-1">
+
                                     <h4
                                       className={`text-[15px] font-black ${
                                         isActive
@@ -508,9 +620,11 @@ export default function Header() {
                                           : "text-zinc-900"
                                       }`}
                                     >
+
                                       {
                                         subItem.label
                                       }
+
                                     </h4>
 
                                     <p
@@ -520,10 +634,13 @@ export default function Header() {
                                           : "text-zinc-500"
                                       }`}
                                     >
+
                                       {
                                         subItem.desc
                                       }
+
                                     </p>
+
                                   </div>
 
                                   {/* RIGHT */}
@@ -535,20 +652,28 @@ export default function Header() {
                                         : "bg-zinc-100 text-zinc-500"
                                     }`}
                                   >
+
                                     →
+
                                   </div>
+
                                 </Link>
                               );
                             }
                           )}
+
                         </div>
+
                       </div>
+
                     </div>
+
                   </div>
                 );
               }
 
               return (
+
                 <Link
                   key={item.href}
                   href={item.href}
@@ -564,7 +689,9 @@ export default function Header() {
                       : "text-zinc-700"
                   }`}
                 >
+
                   {item.label}
+
                 </Link>
               );
             })}
@@ -572,14 +699,20 @@ export default function Header() {
             {/* CTA */}
 
             <a
-              href="https://wa.me/918585986111"
+              href={getJoinNowWhatsappUrl()}
               target="_blank"
+              rel="noopener noreferrer"
               className="mt-3 flex items-center justify-center rounded-2xl bg-black px-5 py-4 text-sm font-black text-white shadow-lg"
             >
+
               Join Now
+
             </a>
+
           </div>
+
         </div>
+
       </header>
     </>
   );
