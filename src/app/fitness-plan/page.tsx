@@ -14,7 +14,7 @@ type GymPlan = {
 
 // ================= WHATSAPP =================
 
-const WHATSAPP_NUMBER = "918175022207";
+const WHATSAPP_NUMBER = "918585986111";
 
 function getWhatsappUrl(plan?: GymPlan) {
 

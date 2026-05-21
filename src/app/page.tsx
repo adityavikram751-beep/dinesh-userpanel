@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 const BANNERS_API = "/api/homepage-banners";
 const API_ORIGIN = "https://dinesh-sagel-backend.onrender.com";
-const WHATSAPP_NUMBER = "8175022207";
+const WHATSAPP_NUMBER = "8585986111";
 
 // ================= WHATSAPP MESSAGE TEMPLATE =================
 

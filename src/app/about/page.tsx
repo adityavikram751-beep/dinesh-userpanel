@@ -7,7 +7,7 @@ const values = [
 
 // ================= WHATSAPP FUNCTION =================
 
-const WHATSAPP_NUMBER = "918175022207";
+const WHATSAPP_NUMBER = "918585986111";
 
 function getWhatsappUrl() {
   const message = `Hi DineshSehgal! 👋
