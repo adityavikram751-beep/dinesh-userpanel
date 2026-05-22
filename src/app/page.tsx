@@ -18,7 +18,7 @@ function getWhatsappUrl(plan?: string) {
 }
 
 const defaultHeroBanner = {
-  title: "FITNESS BACKED BY EXPERIENCE\n& FUELED BY PASSION",
+  title: "",
   image: "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?q=80&w=2400&auto=format&fit=crop",
 };
 
@@ -217,14 +217,14 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-black/10" />
         <div className="absolute inset-0 z-10 flex items-center justify-center px-4">
           <div className="text-center">
-            <h1>
+            {/* <h1>
               {heroBanner.title.split("\n").map((line, index) => (
                 <span key={`${line}-${index}`}>
                   {index > 0 && <br />}
                   {line}
                 </span>
               ))}
-            </h1>
+            </h1> */}
           </div>
         </div>
       </section>
