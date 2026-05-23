@@ -113,107 +113,201 @@ const audience = [
 ];
 
 // ================= CARD COMPONENT =================
+function PlanCard({
+  plan,
+  isPopular,
+}: {
+  plan: GymPlan;
+  isPopular: boolean;
+}) {
 
-function PlanCard({ plan, isPopular }: { plan: GymPlan; isPopular: boolean }) {
-  const [expanded, setExpanded] = useState(false);
-  const currencySymbol = getCurrencySymbol(plan.currencyCode);
-  const featuresNeedMore = plan.features && plan.features.length > 3;
-  const descriptionLong = plan.description && plan.description.split(" ").length > 30;
+  const currencySymbol =
+    getCurrencySymbol(
+      plan.currencyCode
+    );
 
   return (
+
     <article
-      className={`group relative overflow-hidden rounded-[36px] border bg-white shadow-xl transition-all duration-500 hover:-translate-y-3 hover:shadow-2xl flex flex-col h-full ${
-        isPopular ? "scale-[1.02] border-black" : "border-zinc-200"
+      className={`group relative overflow-hidden rounded-[36px] border bg-white shadow-xl transition-all duration-500 hover:-translate-y-3 hover:shadow-2xl flex flex-col h-[h-[560px]]
+      ${
+        isPopular
+          ? "scale-[1.02] border-black"
+          : "border-zinc-200"
       }`}
     >
+
       {/* MOST POPULAR */}
+
       {isPopular && (
+
         <div className="absolute right-5 top-5 rounded-full bg-lime-400 px-4 py-2 text-[10px] font-black uppercase tracking-[0.25em] text-black z-10">
+
           Most Popular
+
         </div>
+
       )}
 
       {/* TOP */}
+
       <div className="bg-black px-6 py-8 sm:py-10 text-center text-white">
-        <h3 className="text-3xl sm:text-4xl font-black">{plan.name}</h3>
+
+        <h3 className="text-3xl sm:text-4xl font-black">
+
+          {plan.name}
+
+        </h3>
+
         {plan.duration && (
-          <p className="mt-2 sm:mt-3 text-base sm:text-lg text-zinc-300">{plan.duration}</p>
+
+          <p className="mt-2 sm:mt-3 text-base sm:text-lg text-zinc-300">
+
+            {plan.duration}
+
+          </p>
+
         )}
+
       </div>
 
       {/* PRICE */}
+
       <div className="border-b border-zinc-200 bg-zinc-100 px-6 py-6 sm:py-8 text-center">
+
         <h4 className="text-4xl sm:text-5xl lg:text-6xl font-black">
+
           {currencySymbol}
           {plan.price}
+
         </h4>
-        <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-zinc-500">Complete Coaching</p>
+
+        <p className="mt-2 text-sm text-zinc-500">
+
+          Complete Coaching
+
+        </p>
+
       </div>
 
       {/* DESCRIPTION */}
+
       {plan.description && (
-        <div className="px-6 pt-6">
-          <div
-            className={`text-[13px] sm:text-[14px] leading-6 sm:leading-7 text-zinc-500 ${
-              !expanded && descriptionLong ? "line-clamp-3" : ""
-            }`}
-          >
+
+        <div className="px-6 pt-6 shrink-0">
+
+          <p className="text-[14px] leading-7 text-zinc-500">
+
             {plan.description}
-          </div>
-          {descriptionLong && (
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="mt-2 text-xs font-semibold text-lime-600 hover:underline"
-            >
-              {expanded ? "See less" : "See more"}
-            </button>
-          )}
+
+          </p>
+
         </div>
+
       )}
 
-      {/* FEATURES */}
-      <div className="px-6 py-6 sm:py-8 flex-1">
-        <div
-          className={`space-y-4 sm:space-y-5 ${
-            expanded && featuresNeedMore ? "max-h-40 sm:max-h-48 overflow-y-auto pr-2" : ""
-          }`}
-          style={expanded && featuresNeedMore ? { scrollbarWidth: "thin" } : {}}
-        >
-          {plan.features?.map((feature, i) => (
-            <div
-              key={i}
-              className="flex items-start gap-3 text-[14px] sm:text-[15px] font-medium leading-6 sm:leading-7 text-zinc-700"
-            >
-              <span className="mt-0.5 text-base sm:text-lg">🔥</span>
-              <span>{feature}</span>
-            </div>
-          ))}
-        </div>
-        {featuresNeedMore && (
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="mt-3 text-xs font-semibold text-lime-600 hover:underline"
-          >
-            {expanded ? "Show less" : `See all ${plan.features.length} features`}
-          </button>
-        )}
-      </div>
+{/* FEATURES */}
 
-      {/* BUTTON - always at bottom */}
-      <div className="px-6 pb-6 sm:pb-8 mt-auto">
+<div className="px-6 py-5 flex-1 min-h-0 overflow-hidden">
+
+  <div
+    className="
+      h-[140px]
+      sm:h-[170px]
+      lg:h-[190px]
+      overflow-y-scroll
+      overscroll-contain
+      pr-2
+      scrollbar-hide
+    "
+  >
+
+    <div className="space-y-4">
+
+      {plan.features?.map(
+        (
+          feature,
+          i
+        ) => (
+
+          <div
+            key={i}
+            className="
+              flex
+              items-start
+              gap-3
+              text-[14px]
+              sm:text-[15px]
+              font-medium
+              leading-6
+              sm:leading-7
+              text-zinc-700
+            "
+          >
+
+            <span className="mt-0.5 text-base sm:text-lg">
+
+              🔥
+
+            </span>
+
+            <span>
+
+              {feature}
+
+            </span>
+
+          </div>
+
+        )
+      )}
+
+    </div>
+
+  </div>
+
+</div>
+      {/* BUTTON FIXED */}
+
+      <div className="px-6 pb-6 sm:pb-8 mt-auto shrink-0">
+
         <a
-          href={getPlanWhatsappUrl(plan)}
+          href={getPlanWhatsappUrl(
+            plan
+          )}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex w-full items-center justify-center rounded-2xl bg-black px-4 sm:px-6 py-4 sm:py-5 text-sm font-black text-white transition duration-300 hover:scale-[1.02] hover:bg-lime-500 hover:text-black"
+          className="
+            flex
+            w-full
+            items-center
+            justify-center
+            rounded-2xl
+            bg-black
+            px-4
+            sm:px-6
+            py-4
+            sm:py-5
+            text-sm
+            font-black
+            text-white
+            transition
+            duration-300
+            hover:scale-[1.02]
+            hover:bg-lime-500
+            hover:text-black
+          "
         >
+
           Buy Now On WhatsApp
+
         </a>
+
       </div>
+
     </article>
   );
 }
-
 export default function FitnessPlanPage() {
   const [plans, setPlans] = useState<GymPlan[]>([]);
 

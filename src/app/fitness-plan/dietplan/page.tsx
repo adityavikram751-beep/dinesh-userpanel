@@ -127,98 +127,160 @@ Thank you 🙌`;
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
 
-// ================= CARD COMPONENT WITH "SEE MORE" SCROLL =================
+function PlanCard({
+  plan,
+  isPopular,
+}: {
+  plan: GymPlan;
+  isPopular: boolean;
+}) {
 
-function PlanCard({ plan, isPopular }: { plan: GymPlan; isPopular: boolean }) {
-  const [expanded, setExpanded] = useState(false);
-  const currencySymbol = getCurrencySymbol(plan.currencyCode);
-
-  // Determine if description/features need expansion based on rough line count
-  // We'll use a simple height check via CSS, but for interactivity we just toggle a class.
+  const currencySymbol =
+    getCurrencySymbol(
+      plan.currencyCode
+    );
 
   return (
+
     <div
-      className={`group overflow-hidden rounded-[36px] border transition duration-300 hover:-translate-y-3 hover:shadow-2xl flex flex-col h-full ${
+      className={`group overflow-hidden rounded-[36px] border transition duration-300 hover:-translate-y-3 hover:shadow-2xl flex flex-col h-[h-[560px]]
+      ${
         isPopular
           ? "relative border-black bg-black text-white shadow-2xl"
           : "border-zinc-200 bg-white shadow-xl"
       }`}
     >
-      {/* MOST POPULAR BADGE */}
+
+      {/* MOST POPULAR */}
+
       {isPopular && (
+
         <div className="absolute right-5 top-5 rounded-full bg-lime-400 px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-black z-10">
+
           Most Popular
+
         </div>
+
       )}
 
-      {/* TOP SECTION */}
-      <div className="bg-black px-6 py-10 text-center text-white">
+      {/* TOP */}
+
+      <div className="bg-black px-6 py-10 text-center text-white shrink-0">
+
         <p className="text-sm font-black uppercase tracking-[0.25em] text-lime-300">
+
           {plan.name}
+
         </p>
+
         <h2 className="mt-5 text-5xl font-black sm:text-6xl">
+
           {currencySymbol}
           {plan.price}
+
         </h2>
-        <p className="mt-3 text-zinc-300">{plan.duration}</p>
+
+        <p className="mt-3 text-zinc-300">
+
+          {plan.duration}
+
+        </p>
+
       </div>
 
-      {/* DESCRIPTION - limited to 3 lines, with "See More" if needed */}
+      {/* DESCRIPTION */}
+
       {plan.description && (
-        <div className="px-6 pt-6">
-          <div
+
+        <div className="px-6 pt-6 shrink-0">
+
+          <p
             className={`text-[14px] leading-7 ${
-              isPopular ? "text-zinc-300" : "text-zinc-600"
-            } ${!expanded ? "line-clamp-3" : ""}`}
+              isPopular
+                ? "text-zinc-300"
+                : "text-zinc-600"
+            }`}
           >
+
             {plan.description}
-          </div>
-          {plan.description.split("\n").join(" ").length > 100 && (
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="mt-2 text-xs font-semibold text-lime-500 hover:underline"
-            >
-              {expanded ? "See less" : "See more"}
-            </button>
-          )}
+
+          </p>
+
         </div>
+
       )}
 
-      {/* FEATURES SECTION - with scrollable area when expanded */}
-      <div className="px-6 py-6 flex-1">
-        <div
-          className={`space-y-3 ${
-            expanded ? "max-h-48 overflow-y-auto pr-2" : ""
-          }`}
-          style={expanded ? { scrollbarWidth: "thin" } : {}}
-        >
-          {Array.isArray(plan.features) &&
-            plan.features.map((item, i) => (
-              <div
-                key={i}
-                className={`flex items-start gap-3 text-[15px] leading-6 ${
-                  isPopular ? "text-zinc-300" : "text-zinc-700"
-                }`}
-              >
-                <span className="mt-0.5 text-lg">🔥</span>
-                <span>{item}</span>
-              </div>
-            ))}
-        </div>
-        {plan.features && plan.features.length > 3 && (
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="mt-3 text-xs font-semibold text-lime-500 hover:underline"
-          >
-            {expanded ? "Show less" : "See all features"}
-          </button>
-        )}
-      </div>
+{/* FEATURES */}
 
-      {/* BUTTON - stays at bottom due to flex layout */}
-      <div className="px-6 pb-8 mt-auto">
+<div className="px-6 py-6 flex-1 min-h-0 flex flex-col">
+
+  <div
+    className={`
+      pr-2
+      ${
+        plan.features?.length > 4
+          ? `
+            flex-1
+            overflow-y-auto
+            max-h-[220px]
+            scrollbar-hide
+          `
+          : ""
+      }
+    `}
+  >
+
+    <div className="space-y-4">
+
+      {Array.isArray(
+        plan.features
+      ) &&
+        plan.features.map(
+          (
+            item,
+            i
+          ) => (
+
+            <div
+              key={i}
+              className={`flex items-start gap-3 text-[15px] leading-6 ${
+                isPopular
+                  ? "text-zinc-300"
+                  : "text-zinc-700"
+              }`}
+            >
+
+              <span className="mt-0.5 text-lg">
+
+                🔥
+
+              </span>
+
+              <span>
+
+                {item}
+
+              </span>
+
+            </div>
+
+          )
+        )}
+
+    </div>
+
+  </div>
+
+</div>
+
+      {/* BUTTON */}
+
+      <div className="px-6 pb-8 mt-auto shrink-0">
+
         <a
-          href={getWhatsappUrl(plan)}
+          href={getWhatsappUrl(
+            plan
+          )}
           target="_blank"
           rel="noopener noreferrer"
           className={`flex items-center justify-center rounded-2xl px-6 py-5 text-base font-black transition duration-300 ${
@@ -227,9 +289,13 @@ function PlanCard({ plan, isPopular }: { plan: GymPlan; isPopular: boolean }) {
               : "bg-black text-white hover:bg-zinc-800"
           }`}
         >
+
           Buy Now
+
         </a>
+
       </div>
+
     </div>
   );
 }
