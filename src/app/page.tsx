@@ -205,29 +205,28 @@ export default function HomePage() {
   return (
     <main className="overflow-hidden bg-[#f6f6f6] text-[#222]">
 
-      {/* ================= HERO ================= */}
-      <section className="relative w-full overflow-hidden">
-        <div className="flex justify-center bg-black">
-          <img
-            src={heroBanner.image}
-            alt="Fitness Banner"
-            className="w-full max-w-[100%] h-[42vh] sm:h-[65vh] md:h-screen object-contain object-center"
-          />
-        </div>
-        <div className="absolute inset-0 bg-black/10" />
-        <div className="absolute inset-0 z-10 flex items-center justify-center px-4">
-          <div className="text-center">
-            {/* <h1>
-              {heroBanner.title.split("\n").map((line, index) => (
-                <span key={`${line}-${index}`}>
-                  {index > 0 && <br />}
-                  {line}
-                </span>
-              ))}
-            </h1> */}
-          </div>
-        </div>
-      </section>
+{/* ================= HERO ================= */}
+<section className="relative w-full overflow-hidden bg-black">
+  <img
+    src={heroBanner.image}
+    alt="Fitness Banner"
+    className="
+      w-full
+      h-auto
+      object-contain
+      object-center
+      block
+    "
+  />
+
+  <div className="absolute inset-0 bg-black/10" />
+
+  <div className="absolute inset-0 z-10 flex items-center justify-center px-4">
+    <div className="text-center">
+      {/* heading */}
+    </div>
+  </div>
+</section>
 
       {/* ================= SERVICES ================= */}
       <section className="py-20 sm:py-24">
