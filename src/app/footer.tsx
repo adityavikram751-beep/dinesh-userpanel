@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 
 const baseUrl = "https://dinesh-sagel-backend.onrender.com";
 
@@ -11,44 +11,55 @@ export default function Footer() {
   const [loading, setLoading] = useState(false);
   const [visible, setVisible] = useState(false);
   const [spinRefresh, setSpinRefresh] = useState(false);
-  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
+  const [formData, setFormData] = useState({ name: "", email: "", mobile: "", message: "" });
   const footerRef = useRef<HTMLElement>(null);
 
-  const generateNumbers = () => {
+  const generateNumbers = useCallback(() => {
     setNum1(Math.floor(Math.random() * 20) + 1);
     setNum2(Math.floor(Math.random() * 20) + 1);
-  };
+  }, []);
 
   useEffect(() => {
-    generateNumbers();
+    const numberTimer = window.setTimeout(generateNumbers, 0);
 
-    // Mobile pe bhi kaam kare isliye rootMargin negative nahi rakha
     const observer = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) setVisible(true); },
       { threshold: 0, rootMargin: "0px 0px -30px 0px" }
     );
     if (footerRef.current) observer.observe(footerRef.current);
-    return () => observer.disconnect();
-  }, []);
+    return () => {
+      window.clearTimeout(numberTimer);
+      observer.disconnect();
+    };
+  }, [generateNumbers]);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    const nextValue = name === "mobile" ? value.replace(/\D/g, "").slice(0, 10) : value;
+    setFormData((prev) => ({ ...prev, [name]: nextValue }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (formData.mobile.length !== 10) { alert("Mobile number 10 digit ka hona chahiye"); return; }
     if (Number(answer) !== num1 + num2) { alert("Wrong Answer ❌"); return; }
     try {
       setLoading(true);
+      const enquiryPayload = {
+        name: formData.name,
+        email: formData.email,
+        mobileNumber: formData.mobile,
+        message: formData.message,
+      };
       const res = await fetch(`${baseUrl}/api/enquiries`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(enquiryPayload),
       });
       const data = await res.json();
       if (data.success) {
         alert("Enquiry Submitted ✅");
-        setFormData({ name: "", email: "", message: "" });
+        setFormData({ name: "", email: "", mobile: "", message: "" });
         setAnswer("");
         generateNumbers();
       } else {
@@ -66,47 +77,65 @@ export default function Footer() {
   const show = "opacity-100 translate-y-0";
 
   return (
-    <footer ref={footerRef} className="bg-[#06a7b5] px-5 py-12 text-white sm:px-8 lg:px-10">
-      <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-3">
+    <footer 
+      ref={footerRef} 
+      className="px-5 py-12 text-white sm:px-8 lg:px-10"
+      style={{
+        background: "linear-gradient(180deg, #059669 0%, #047857 30%, #065f46 60%, #064e3b 100%)"
+      }}
+    >
+      {/* Top Border with Glow */}
+      <div className="relative">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+        <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/20 blur-xl" />
+      </div>
 
-        {/* LEFT IMAGE */}
-        <div
-          className={`flex flex-col ${base} ${visible ? show : hidden}`}
-          style={{ transitionDelay: "0ms" }}
-        >
-          <div className="overflow-hidden rounded-xl">
-            <img
-              src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=800&auto=format&fit=crop"
-              alt="fitness"
-              className="h-[180px] sm:h-[220px] lg:h-[280px] w-full object-cover transition-transform duration-700 hover:scale-105"
-            />
-          </div>
-          {/* Tagline — mt-auto se image ke bilkul niche, bottom mein */}
-          <p className="mt-auto pt-3 text-sm font-bold">
-            "Ready To Lose Fat, DineshSehgal Me"
-          </p>
-        </div>
+      <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-3 pt-8">
 
-        {/* CENTER IMAGE */}
-        <div
-          className={`${base} ${visible ? show : hidden}`}
-          style={{ transitionDelay: "150ms" }}
-        >
-          <div className="overflow-hidden rounded-xl">
-            <img
-              src="https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=800&auto=format&fit=crop"
-              alt="coach"
-              className="h-[180px] sm:h-[220px] lg:h-[280px] w-full object-cover transition-transform duration-700 hover:scale-105"
-            />
-          </div>
-        </div>
+      {/* LEFT IMAGE */}
+<div
+  className={`flex flex-col ${base} ${visible ? show : hidden}`}
+  style={{ transitionDelay: "0ms" }}
+>
+  <div className="relative overflow-hidden rounded-xl border border-white/20 shadow-xl shadow-black/20 group">
+    <img
+      src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=800&auto=format&fit=crop"
+      alt="fitness"
+      className="h-[180px] sm:h-[220px] lg:h-[280px] w-full object-cover transition-transform duration-700 group-hover:scale-105"
+    />
+    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+  </div>
+  <p className="mt-auto pt-3 text-sm font-bold text-white/90">
+    &quot;Ready To Lose Fat, DineshSehgal Me&quot;
+  </p>
+</div>
+
+{/* CENTER IMAGE */}
+<div
+  className={`${base} ${visible ? show : hidden}`}
+  style={{ transitionDelay: "150ms" }}
+>
+  <div className="relative overflow-hidden rounded-xl border border-white/20 shadow-xl shadow-black/20 group">
+    <img
+      src="https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=800&auto=format&fit=crop"
+      alt="coach"
+      className="h-[180px] sm:h-[220px] lg:h-[280px] w-full object-cover transition-transform duration-700 group-hover:scale-105"
+    />
+    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+  </div>
+</div>
 
         {/* RIGHT — FORM CARD */}
         <div
-          className={`rounded-2xl bg-white p-5 sm:p-6 text-zinc-900 flex flex-col justify-center ${base} ${visible ? `${show} scale-100` : `${hidden} scale-95`}`}
+          className={`rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 p-5 sm:p-6 text-white flex flex-col justify-center shadow-2xl shadow-black/20 ${base} ${visible ? `${show} scale-100` : `${hidden} scale-95`}`}
           style={{ transitionDelay: "300ms" }}
         >
-          <p className="mb-4 text-base font-black text-zinc-900">Get In Touch</p>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-1 h-6 bg-white rounded-full" />
+            <p className="text-base font-black text-white">
+              Get In Touch
+            </p>
+          </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
 
@@ -122,7 +151,7 @@ export default function Footer() {
                 onChange={handleChange}
                 placeholder="Name"
                 required
-                className="h-11 w-full rounded-xl border border-zinc-200 bg-zinc-100 px-4 text-sm text-zinc-900 outline-none focus:border-[#06a7b5] focus:bg-white focus:-translate-y-px focus:shadow-[0_0_0_3px_rgba(6,167,181,.15)] transition-all duration-200"
+                className="h-11 w-full rounded-xl border border-white/20 bg-white/10 px-4 text-sm text-white placeholder:text-white/50 outline-none focus:border-white focus:bg-white/20 focus:-translate-y-px focus:shadow-[0_0_0_3px_rgba(255,255,255,.1)] transition-all duration-200"
               />
               <input
                 type="email"
@@ -131,7 +160,27 @@ export default function Footer() {
                 onChange={handleChange}
                 placeholder="Email Address"
                 required
-                className="h-11 w-full rounded-xl border border-zinc-200 bg-zinc-100 px-4 text-sm text-zinc-900 outline-none focus:border-[#06a7b5] focus:bg-white focus:-translate-y-px focus:shadow-[0_0_0_3px_rgba(6,167,181,.15)] transition-all duration-200"
+                className="h-11 w-full rounded-xl border border-white/20 bg-white/10 px-4 text-sm text-white placeholder:text-white/50 outline-none focus:border-white focus:bg-white/20 focus:-translate-y-px focus:shadow-[0_0_0_3px_rgba(255,255,255,.1)] transition-all duration-200"
+              />
+            </div>
+
+            {/* MOBILE */}
+            <div
+              className={`${base} ${visible ? show : hidden}`}
+              style={{ transitionDelay: "465ms" }}
+            >
+              <input
+                type="tel"
+                name="mobile"
+                value={formData.mobile}
+                onChange={handleChange}
+                placeholder="Mobile Number"
+                required
+                inputMode="numeric"
+                pattern="[0-9]{10}"
+                maxLength={10}
+                title="Please enter a 10 digit mobile number"
+                className="h-11 w-full rounded-xl border border-white/20 bg-white/10 px-4 text-sm text-white placeholder:text-white/50 outline-none focus:border-white focus:bg-white/20 focus:-translate-y-px focus:shadow-[0_0_0_3px_rgba(255,255,255,.1)] transition-all duration-200"
               />
             </div>
 
@@ -147,7 +196,7 @@ export default function Footer() {
                 onChange={handleChange}
                 placeholder="Message"
                 required
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-100 p-3 text-sm text-zinc-900 outline-none focus:border-[#06a7b5] focus:bg-white focus:-translate-y-px focus:shadow-[0_0_0_3px_rgba(6,167,181,.15)] transition-all duration-200 resize-none"
+                className="w-full rounded-xl border border-white/20 bg-white/10 p-3 text-sm text-white placeholder:text-white/50 outline-none focus:border-white focus:bg-white/20 focus:-translate-y-px focus:shadow-[0_0_0_3px_rgba(255,255,255,.1)] transition-all duration-200 resize-none"
               />
             </div>
 
@@ -157,18 +206,18 @@ export default function Footer() {
               style={{ transitionDelay: "600ms" }}
             >
               {/* CAPTCHA */}
-              <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-100 px-3 py-2 transition-all duration-200 focus-within:border-[#06a7b5]">
-                <span className="min-w-[20px] text-center text-xl font-black text-zinc-900">{num1}</span>
-                <span className="text-lg text-zinc-400">+</span>
-                <span className="min-w-[20px] text-center text-xl font-black text-zinc-900">{num2}</span>
-                <span className="text-lg text-zinc-400">=</span>
+              <div className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 py-2 transition-all duration-200 focus-within:border-white">
+                <span className="min-w-[20px] text-center text-xl font-black text-white">{num1}</span>
+                <span className="text-lg text-white/50">+</span>
+                <span className="min-w-[20px] text-center text-xl font-black text-white">{num2}</span>
+                <span className="text-lg text-white/50">=</span>
                 <input
                   type="number"
                   value={answer}
                   onChange={(e) => setAnswer(e.target.value)}
                   placeholder="?"
                   required
-                  className="h-10 w-12 rounded-lg border border-zinc-200 bg-white text-center text-lg font-bold text-zinc-900 outline-none focus:border-[#06a7b5] transition-all duration-200 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  className="h-10 w-12 rounded-lg border border-white/20 bg-white/10 text-center text-lg font-bold text-white outline-none focus:border-white transition-all duration-200 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 />
                 <button
                   type="button"
@@ -179,7 +228,7 @@ export default function Footer() {
                     setTimeout(() => setSpinRefresh(false), 400);
                   }}
                   title="New question"
-                  className={`flex h-7 w-7 items-center justify-center rounded-full bg-zinc-200 text-zinc-600 transition-all duration-300 hover:bg-[#06a7b5] hover:text-white ${spinRefresh ? "rotate-180" : "rotate-0"}`}
+                  className={`flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white/70 transition-all duration-300 hover:bg-white hover:text-green-700 hover:shadow-lg hover:shadow-white/30 ${spinRefresh ? "rotate-180" : "rotate-0"}`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
@@ -194,7 +243,7 @@ export default function Footer() {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 h-11 min-w-[90px] rounded-xl bg-[#06a7b5] text-sm font-black text-white transition-all duration-200 hover:bg-[#058fa0] hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(6,167,181,.4)] active:scale-95 disabled:opacity-60"
+                className="flex-1 h-11 min-w-[90px] rounded-xl bg-white text-sm font-black text-green-700 transition-all duration-200 hover:bg-white/90 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(255,255,255,.3)] active:scale-95 disabled:opacity-60"
               >
                 {loading ? "Submitting..." : "Submit"}
               </button>
@@ -203,6 +252,11 @@ export default function Footer() {
           </form>
         </div>
 
+      </div>
+
+      {/* Bottom Line */}
+      <div className="relative mt-10">
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       </div>
     </footer>
   );

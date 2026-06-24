@@ -1,23 +1,77 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
+
+// ================= TYPES =================
+
+type PriceEntry = {
+  currencyCode: string;
+  price: number;
+  symbol: string;
+  _id: string;
+};
 
 type GymPlan = {
   _id: string;
   name: string;
   description?: string;
-  price: number | string;
+  price?: number | string;
+  currencyCode?: string;
+  allprice?: PriceEntry[];
   duration: string;
-  category?: string;
-  currencyCode?: string; // INR, USD, etc.
   features: string[];
+  popular?: boolean;
 };
 
-// ================= WHATSAPP =================
+type CheckoutStep = "form" | "payment" | "success";
+
+type CheckoutForm = {
+  country: string;
+  name: string;
+  age: string;
+  gender: string;
+  email: string;
+  mobile: string;
+  description: string;
+  pastInjury: string;
+  goal: string;
+};
+
+// ================= CONSTANTS =================
 
 const WHATSAPP_NUMBER = "918585986111";
+const UPI_ID = "dineshsehgal@upi";
+const API_BASE_URL = "https://dinesh-sagel-backend.onrender.com";
 
-// Helper to get currency symbol
+const defaultCheckoutForm: CheckoutForm = {
+  country: "India",
+  name: "",
+  age: "",
+  gender: "",
+  email: "",
+  mobile: "",
+  description: "",
+  pastInjury: "",
+  goal: "",
+};
+
+const countryOptions = ["India", "United States", "United Kingdom", "Canada"];
+
+// ================= HELPERS =================
+
+function countryToCurrency(country: string): string {
+  switch (country) {
+    case "United States":
+      return "USD";
+    case "United Kingdom":
+      return "GBP";
+    case "Canada":
+      return "CAD";
+    default:
+      return "INR";
+  }
+}
+
 function getCurrencySymbol(currencyCode?: string): string {
   if (!currencyCode) return "₹";
   switch (currencyCode.toUpperCase()) {
@@ -29,56 +83,85 @@ function getCurrencySymbol(currencyCode?: string): string {
       return "£";
     case "INR":
       return "₹";
+    case "CAD":
+      return "CA$";
     default:
       return "₹";
   }
 }
 
-// ===== SIMPLE FLOATING WHATSAPP =====
+function resolvePlanPrice(
+  plan: GymPlan,
+  preferredCurrency: string = "INR"
+): { price: number | string; symbol: string; currencyCode: string } {
+  if (plan.allprice?.length) {
+    const match =
+      plan.allprice.find(
+        (p) => p.currencyCode.toUpperCase() === preferredCurrency.toUpperCase()
+      ) ?? plan.allprice[0];
+    return {
+      price: match.price,
+      symbol: match.symbol,
+      currencyCode: match.currencyCode,
+    };
+  }
+  return {
+    price: plan.price ?? "",
+    symbol: getCurrencySymbol(plan.currencyCode),
+    currencyCode: plan.currencyCode ?? "INR",
+  };
+}
+
+function getOrderId() {
+  return `DSF-${Date.now().toString().slice(-6)}`;
+}
+
+// ================= WHATSAPP HELPERS =================
 
 function getSimpleWhatsappUrl() {
   const message = `Hi DineshSehgal! 👋
 
-  I want to know more about your fitness programs.
-  
-  Please share:
-  ✅ Pricing
-  ✅ Workout Plans
-  ✅ Diet Plans
-  ✅ Coaching Details
-  
-  Thank you 🙌`;
+I want to start my fitness transformation journey.
 
+Please guide me about:
+✅ Available Plans
+✅ Pricing
+✅ Workout Details
+✅ Diet Plan
+
+Thank you 🙌`;
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
 
-// ===== SINGLE CARD DETAIL =====
-
-function getWhatsappUrl(plan?: GymPlan) {
-  const featuresText =
-    plan?.features?.length
-      ? plan.features.map((feature) => `• ${feature}`).join("\n")
-      : "";
-
-  const currencySymbol = getCurrencySymbol(plan?.currencyCode);
+function getPlanWhatsappUrl(
+  plan: GymPlan,
+  price: number | string,
+  symbol: string
+) {
+  const featuresText = plan.features?.length
+    ? plan.features
+        .slice(0, 5)
+        .map((f) => `• ${f}`)
+        .join("\n")
+    : "";
 
   const message = `Hi DineshSehgal! 👋
 
-I want this Diet Plan.
+I want this fitness plan.
 
-🥗 Plan Name:
-${plan?.name || ""}
+🏋️ Plan Name:
+${plan.name}
 
 💰 Price:
-${currencySymbol}${plan?.price || ""}
+${symbol}${price}
 
 ⏳ Duration:
-${plan?.duration || ""}
+${plan.duration}
 
 📋 Plan Details:
-${plan?.description || ""}
+${plan.description || ""}
 
-🔥 Included Features:
+🔥 Features:
 ${featuresText}
 
 Please share complete details 🙌`;
@@ -86,223 +169,32 @@ Please share complete details 🙌`;
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
 
-// ===== ALL PLANS DETAIL =====
-
 function getAllPlansWhatsappUrl(plans: GymPlan[]) {
-  const plansText =
-    plans?.length > 0
-      ? plans
-          .map((plan, index) => {
-            const currencySymbol = getCurrencySymbol(plan.currencyCode);
-            return `
-${index + 1}. ${plan.name}
-
-💰 Price: ${currencySymbol}${plan.price}
-
-⏳ Duration: ${plan.duration}
-
-📋 ${plan.description || ""}
-
-🔥 Features:
-${plan.features?.map((f) => `• ${f}`).join("\n") || ""}`;
-          })
-          .join("\n\n")
-      : "";
-
-  const message = `Hi DineshSehgal! 👋
-
-I want details about all diet plans.
-
-${plansText}
-
-Please guide me about:
-✅ Best Plan
-✅ Diet Details
-✅ Weight Loss
-✅ Muscle Gain
-✅ Transformation
-
-Thank you 🙌`;
-
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+  if (plans.length === 0) return getSimpleWhatsappUrl();
+  const plan = plans[0];
+  const resolved = resolvePlanPrice(plan, "INR");
+  return getPlanWhatsappUrl(plan, resolved.price, resolved.symbol);
 }
 
-function PlanCard({
-  plan,
-  isPopular,
-}: {
-  plan: GymPlan;
-  isPopular: boolean;
-}) {
-
-  const currencySymbol =
-    getCurrencySymbol(
-      plan.currencyCode
-    );
-
-  return (
-
-    <div
-      className={`group overflow-hidden rounded-[36px] border transition duration-300 hover:-translate-y-3 hover:shadow-2xl flex flex-col h-[h-[560px]]
-      ${
-        isPopular
-          ? "relative border-black bg-black text-white shadow-2xl"
-          : "border-zinc-200 bg-white shadow-xl"
-      }`}
-    >
-
-      {/* MOST POPULAR */}
-
-      {isPopular && (
-
-        <div className="absolute right-5 top-5 rounded-full bg-lime-400 px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-black z-10">
-
-          Most Popular
-
-        </div>
-
-      )}
-
-      {/* TOP */}
-
-      <div className="bg-black px-6 py-10 text-center text-white shrink-0">
-
-        <p className="text-sm font-black uppercase tracking-[0.25em] text-lime-300">
-
-          {plan.name}
-
-        </p>
-
-        <h2 className="mt-5 text-5xl font-black sm:text-6xl">
-
-          {currencySymbol}
-          {plan.price}
-
-        </h2>
-
-        <p className="mt-3 text-zinc-300">
-
-          {plan.duration}
-
-        </p>
-
-      </div>
-
-      {/* DESCRIPTION */}
-
-      {plan.description && (
-
-        <div className="px-6 pt-6 shrink-0">
-
-          <p
-            className={`text-[14px] leading-7 ${
-              isPopular
-                ? "text-zinc-300"
-                : "text-zinc-600"
-            }`}
-          >
-
-            {plan.description}
-
-          </p>
-
-        </div>
-
-      )}
-
-{/* FEATURES */}
-
-<div className="px-6 py-6 flex-1 min-h-0 flex flex-col">
-
-  <div
-    className={`
-      pr-2
-      ${
-        plan.features?.length > 4
-          ? `
-            flex-1
-            overflow-y-auto
-            max-h-[220px]
-            scrollbar-hide
-          `
-          : ""
-      }
-    `}
-  >
-
-    <div className="space-y-4">
-
-      {Array.isArray(
-        plan.features
-      ) &&
-        plan.features.map(
-          (
-            item,
-            i
-          ) => (
-
-            <div
-              key={i}
-              className={`flex items-start gap-3 text-[15px] leading-6 ${
-                isPopular
-                  ? "text-zinc-300"
-                  : "text-zinc-700"
-              }`}
-            >
-
-              <span className="mt-0.5 text-lg">
-
-                🔥
-
-              </span>
-
-              <span>
-
-                {item}
-
-              </span>
-
-            </div>
-
-          )
-        )}
-
-    </div>
-
-  </div>
-
-</div>
-
-      {/* BUTTON */}
-
-      <div className="px-6 pb-8 mt-auto shrink-0">
-
-        <a
-          href={getWhatsappUrl(
-            plan
-          )}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`flex items-center justify-center rounded-2xl px-6 py-5 text-base font-black transition duration-300 ${
-            isPopular
-              ? "bg-lime-400 text-black hover:scale-[1.02]"
-              : "bg-black text-white hover:bg-zinc-800"
-          }`}
-        >
-
-          Buy Now
-
-        </a>
-
-      </div>
-
-    </div>
-  );
-}
+// ================= MAIN PAGE =================
 
 export default function DietPlanPage() {
   const [plans, setPlans] = useState<GymPlan[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState<GymPlan | null>(null);
+  const [checkoutStep, setCheckoutStep] = useState<CheckoutStep>("form");
+  const [checkoutForm, setCheckoutForm] =
+    useState<CheckoutForm>(defaultCheckoutForm);
+  const [orderId, setOrderId] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Load plans
   useEffect(() => {
     async function loadPlans() {
       try {
@@ -310,166 +202,661 @@ export default function DietPlanPage() {
           "https://dinesh-sagel-backend.onrender.com/api/plans/plans?category=diet"
         );
         const data = await response.json();
-        console.log("DIET API =>", data);
 
+        let fetchedPlans: GymPlan[] = [];
         if (Array.isArray(data)) {
-          setPlans(data);
+          fetchedPlans = data;
         } else if (Array.isArray(data?.plans)) {
-          setPlans(data.plans);
+          fetchedPlans = data.plans;
         } else if (Array.isArray(data?.data)) {
-          setPlans(data.data);
+          fetchedPlans = data.data;
         } else if (Array.isArray(data?.data?.plans)) {
-          setPlans(data.data.plans);
-        } else {
-          setPlans([]);
+          fetchedPlans = data.data.plans;
         }
+        setPlans(fetchedPlans);
       } catch (error) {
         console.log(error);
         setPlans([]);
+      } finally {
+        setIsLoading(false);
       }
     }
     loadPlans();
   }, []);
 
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(""), 3000);
+  }
+
+  function openCheckout(plan: GymPlan) {
+    setSelectedPlan(plan);
+    setCheckoutStep("form");
+    setCheckoutForm(defaultCheckoutForm);
+    setOrderId("");
+  }
+
+  function closeCheckout() {
+    setSelectedPlan(null);
+    setCheckoutStep("form");
+    setOrderId("");
+  }
+
+  function updateCheckoutField(field: keyof CheckoutForm, value: string) {
+    setCheckoutForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function proceedToPayment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmitting(true);
+
+    try {
+      const token = localStorage.getItem("token");
+
+      const resolvedPrice = resolvePlanPrice(
+        selectedPlan!,
+        countryToCurrency(checkoutForm.country)
+      );
+
+      const payload = {
+        course_id: selectedPlan!._id,
+        full_name: checkoutForm.name,
+        age: parseInt(checkoutForm.age),
+        gender: checkoutForm.gender,
+        email: checkoutForm.email,
+        mobile_number: checkoutForm.mobile,
+        description: checkoutForm.description,
+        past_injury: checkoutForm.pastInjury,
+        goal: checkoutForm.goal,
+        currencyCode: resolvedPrice.currencyCode,
+      };
+
+      const response = await fetch(`${API_BASE_URL}/api/purchase/plan`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Something went wrong");
+      }
+
+      setOrderId(getOrderId());
+      setCheckoutStep("payment");
+      showToast("✅ Plan booked successfully!");
+    } catch (error: any) {
+      console.error("❌ Payment error:", error);
+      showToast(error.message || "❌ Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const resolvedCheckoutPrice = selectedPlan
+    ? resolvePlanPrice(selectedPlan, countryToCurrency(checkoutForm.country))
+    : null;
+
+  const mainPlan = plans.length > 0 ? plans[0] : null;
+  const primaryPrice = mainPlan
+    ? resolvePlanPrice(mainPlan, "INR")
+    : { price: "", symbol: "₹", currencyCode: "INR" };
+  const otherPrices = mainPlan?.allprice?.slice(1) ?? [];
+
+  if (!isMounted) {
+    return null;
+  }
+
   return (
-    <main className="min-h-screen overflow-hidden bg-[#f5f5f5]">
-      {/* ================= HERO ================= */}
-      <section className="relative overflow-hidden bg-black text-white">
-        <div className="absolute inset-0 bg-gradient-to-br from-zinc-950 via-black to-zinc-900" />
-        <div className="absolute -left-24 top-0 h-[320px] w-[320px] rounded-full bg-lime-500/20 blur-3xl" />
-        <div className="absolute bottom-0 right-0 h-[320px] w-[320px] rounded-full bg-orange-500/10 blur-3xl" />
+    <main className="min-h-screen bg-black">
+      
+      {/* Toast Notification */}
+      {toast && (
+        <div
+          className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-xl text-sm font-semibold text-white shadow-lg transition-all duration-300"
+          style={{
+            background: toast.includes("✅") ? "#22c55e" : "#ef4444",
+          }}
+        >
+          {toast}
+        </div>
+      )}
 
-        <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 py-14 sm:px-8 lg:grid-cols-2 lg:px-10 lg:py-24">
-          {/* LEFT */}
-          <div>
-            <p className="inline-flex rounded-full border border-lime-400/20 bg-lime-400/10 px-5 py-2 text-[10px] font-black uppercase tracking-[0.28em] text-lime-300 sm:text-xs">
-              Personalized Nutrition
-            </p>
-            <h1 className="mt-6 text-4xl font-black leading-[1.05] sm:text-5xl lg:text-7xl">
-              Personalized
-              <br />
-              Diet Plans
-            </h1>
-            <p className="mt-6 max-w-2xl text-[15px] leading-8 text-zinc-300 sm:text-lg sm:leading-9">
-              Get a customized meal plan designed according to your body goals,
-              lifestyle and complete fitness transformation.
-            </p>
+      {/* ================= PRICING SECTION ================= */}
+      <section className="relative min-h-screen flex items-center overflow-hidden bg-black">
+        
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMyMjIiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djItSDI0di0yaDEyek0zNiAyNHYySDI0di0yaDEyeiIvPjwvZz48L2c+PC9zdmc+')] opacity-5" />
+        
+        {/* Decorative Blobs */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-emerald-400/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-3xl" />
 
-            <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-              <a
-                href={getAllPlansWhatsappUrl(plans)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center rounded-2xl bg-lime-400 px-7 py-4 text-sm font-black text-black shadow-xl transition duration-300 hover:scale-105 sm:text-base"
-              >
-                Get Your Diet Plan
-              </a>
-              <a
-                href={getSimpleWhatsappUrl()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center rounded-2xl border border-white/15 bg-white/10 px-7 py-4 text-sm font-black backdrop-blur transition duration-300 hover:bg-white/20 sm:text-base"
-              >
-                WhatsApp Now
-              </a>
+        <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-24 w-full">
+          
+          {/* Section Header */}
+          <div className="text-center mb-12 sm:mb-16">
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 sm:px-4 py-1 text-[8px] sm:text-[10px] font-semibold uppercase tracking-[0.28em] text-emerald-300 backdrop-blur-sm mb-3 sm:mb-4">
+              <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-full w-full rounded-full bg-emerald-400" />
+              </span>
+              Pricing
+            </div>
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-white">
+              Simple & 
+              <span className="bg-gradient-to-r from-emerald-300 to-emerald-400 bg-clip-text text-transparent ml-2 sm:ml-3">Affordable</span>
+            </h2>
+            <p className="mt-2 sm:mt-4 max-w-xl mx-auto text-xs sm:text-sm text-slate-300">
+              Direct expert support and personalized coaching according to your body goals.
+            </p>
+          </div>
+
+          {/* Main Content Grid */}
+          <div className="grid gap-6 sm:gap-8 lg:grid-cols-2 lg:gap-10 items-center">
+            
+            {/* LEFT - Image & Stats */}
+            <div className="space-y-4 sm:space-y-5 order-2 lg:order-1">
+              {/* Image Card */}
+              <div className="relative rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl shadow-emerald-500/10 group">
+                <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/20 to-transparent" />
+                <img
+                  src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1200&auto=format&fit=crop"
+                  alt="Healthy nutrition diet plan"
+                  className="w-full h-[200px] sm:h-[320px] lg:h-[380px] object-cover group-hover:scale-105 transition-transform duration-700"
+                />
+                
+                {/* Floating Badges */}
+                <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
+                  <div className="rounded-lg sm:rounded-xl bg-black/60 backdrop-blur-md px-2.5 sm:px-4 py-1 sm:py-2 border border-white/10">
+                    <p className="text-[8px] sm:text-xs font-semibold text-emerald-300">🥗 Nutrition Expert</p>
+                  </div>
+                </div>
+                
+                <div className="absolute bottom-2 left-2 right-2 sm:bottom-4 sm:left-4 sm:right-4 flex flex-wrap gap-1.5 sm:gap-2">
+                  <div className="inline-flex items-center gap-1 sm:gap-2 rounded-lg sm:rounded-xl bg-black/60 backdrop-blur-md px-2 sm:px-4 py-1 sm:py-2 border border-white/10">
+                    <span className="text-base sm:text-xl">🥑</span>
+                    <span className="text-[10px] sm:text-sm font-semibold text-white">Balanced Diet</span>
+                  </div>
+                  <div className="inline-flex items-center gap-1 sm:gap-2 rounded-lg sm:rounded-xl bg-black/60 backdrop-blur-md px-2 sm:px-4 py-1 sm:py-2 border border-white/10">
+                    <span className="text-base sm:text-xl">💪</span>
+                    <span className="text-[10px] sm:text-sm font-semibold text-white">Muscle Gain</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                <div className="rounded-lg sm:rounded-xl border border-white/10 bg-white/5 p-2.5 sm:p-4 text-center backdrop-blur hover:bg-white/10 transition-colors">
+                  <p className="text-lg sm:text-2xl font-bold text-emerald-300">500+</p>
+                  <p className="text-[8px] sm:text-xs text-slate-400 mt-0.5 sm:mt-1">Happy Clients</p>
+                </div>
+                <div className="rounded-lg sm:rounded-xl border border-white/10 bg-white/5 p-2.5 sm:p-4 text-center backdrop-blur hover:bg-white/10 transition-colors">
+                  <p className="text-lg sm:text-2xl font-bold text-emerald-300">24/7</p>
+                  <p className="text-[8px] sm:text-xs text-slate-400 mt-0.5 sm:mt-1">Expert Support</p>
+                </div>
+                <div className="rounded-lg sm:rounded-xl border border-white/10 bg-white/5 p-2.5 sm:p-4 text-center backdrop-blur hover:bg-white/10 transition-colors">
+                  <p className="text-lg sm:text-2xl font-bold text-emerald-300">100%</p>
+                  <p className="text-[8px] sm:text-xs text-slate-400 mt-0.5 sm:mt-1">Customized</p>
+                </div>
+                <div className="rounded-lg sm:rounded-xl border border-white/10 bg-white/5 p-2.5 sm:p-4 text-center backdrop-blur hover:bg-white/10 transition-colors">
+                  <p className="text-lg sm:text-2xl font-bold text-emerald-300">4.9★</p>
+                  <p className="text-[8px] sm:text-xs text-slate-400 mt-0.5 sm:mt-1">Client Rating</p>
+                </div>
+              </div>
             </div>
 
-            <div className="mt-12 grid grid-cols-3 gap-4">
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-5 text-center backdrop-blur">
-                <h3 className="text-3xl font-black">500+</h3>
-                <p className="mt-1 text-xs text-zinc-300 sm:text-sm">Clients</p>
-              </div>
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-5 text-center backdrop-blur">
-                <h3 className="text-3xl font-black">24/7</h3>
-                <p className="mt-1 text-xs text-zinc-300 sm:text-sm">Support</p>
-              </div>
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-5 text-center backdrop-blur">
-                <h3 className="text-3xl font-black">100%</h3>
-                <p className="mt-1 text-xs text-zinc-300 sm:text-sm">
-                  Personalized
+            {/* RIGHT - Plan Card */}
+            <div className="order-1 lg:order-2">
+              {isLoading ? (
+                <div className="rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-8 sm:p-12 text-center">
+                  <div className="mx-auto h-8 w-8 sm:h-12 sm:w-12 rounded-full border-3 sm:border-4 border-emerald-400 border-t-transparent animate-spin" />
+                  <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-slate-400 font-medium">Loading Plans...</p>
+                </div>
+              ) : mainPlan ? (
+                <div className="rounded-xl sm:rounded-2xl border border-white/10 bg-white/10 backdrop-blur-xl shadow-2xl shadow-emerald-500/5 overflow-hidden hover:border-white/20 transition-all duration-300 max-w-sm sm:max-w-md mx-auto lg:mx-0">
+                  
+                  {/* Card Header */}
+                  <div className="bg-gradient-to-r from-emerald-500/20 to-emerald-400/10 px-4 sm:px-6 py-3.5 sm:py-5 border-b border-white/10">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-emerald-500/20 px-2 sm:px-3 py-0.5 sm:py-1 mb-1 sm:mb-2">
+                          <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
+                            <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                            <span className="relative inline-flex h-full w-full rounded-full bg-emerald-400" />
+                          </span>
+                          <span className="text-[8px] sm:text-[10px] font-semibold uppercase tracking-[0.15em] text-emerald-300">
+                            Personalized Plan
+                          </span>
+                        </div>
+                        <h3 className="text-lg sm:text-2xl font-bold text-white truncate">
+                          {mainPlan.name}
+                        </h3>
+                        {mainPlan.description && (
+                          <p className="mt-0.5 text-[10px] sm:text-sm text-slate-300 truncate">
+                            {mainPlan.description}
+                          </p>
+                        )}
+                      </div>
+                      <div className="shrink-0 flex items-center gap-1 rounded-lg sm:rounded-xl bg-white/10 px-2 sm:px-3 py-1 sm:py-2">
+                        <svg className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+                        </svg>
+                        <span className="text-[8px] sm:text-xs font-semibold text-emerald-400 whitespace-nowrap">{mainPlan.duration}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card Body */}
+                  <div className="px-4 sm:px-6 py-4 sm:py-6">
+                    
+                    {/* Price Section */}
+                    <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4 mb-4 sm:mb-6">
+                      <div>
+                        <p className="text-[8px] sm:text-xs font-semibold uppercase tracking-[0.15em] text-slate-400 mb-0.5">
+                          Plan Price
+                        </p>
+                        <div className="flex items-baseline gap-2 sm:gap-3">
+                          <span className="text-2xl sm:text-4xl lg:text-5xl font-bold text-white">
+                            {primaryPrice.symbol}{primaryPrice.price}
+                          </span>
+                          <span className="rounded-lg bg-white/10 px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[7px] sm:text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
+                            {primaryPrice.currencyCode}
+                          </span>
+                        </div>
+                      </div>
+
+                      {otherPrices.length > 0 && (
+                        <div className="flex flex-wrap gap-1 sm:gap-2">
+                          {otherPrices.map((p) => (
+                            <span
+                              key={p._id}
+                              className="inline-flex items-center gap-0.5 sm:gap-1 rounded-lg border border-white/10 bg-white/5 px-1.5 sm:px-3 py-0.5 sm:py-1.5 text-[10px] sm:text-sm font-semibold text-slate-300 hover:bg-white/10 transition-colors"
+                            >
+                              {p.symbol}{p.price}
+                              <span className="text-[6px] sm:text-[10px] font-medium text-slate-400 uppercase ml-0.5">{p.currencyCode}</span>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Features - Dynamic from API */}
+                    <div className="mb-4 sm:mb-6">
+                      <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                        <span className="text-[8px] sm:text-xs font-semibold uppercase tracking-[0.15em] text-slate-400">
+                          What's included
+                        </span>
+                        <span className="flex-1 h-px bg-white/10" />
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-1 sm:gap-2">
+                        {(mainPlan.features || []).map((feature, i) => (
+                          <div
+                            key={i}
+                            className="flex items-start gap-2 sm:gap-3 rounded-lg sm:rounded-xl border border-white/5 bg-white/5 px-2.5 sm:px-4 py-1.5 sm:py-2.5 hover:bg-white/10 transition-colors group"
+                          >
+                            <span className="mt-0.5 flex h-3.5 w-3.5 sm:h-5 sm:w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 group-hover:bg-emerald-500/30 transition-colors">
+                              <svg className="h-2 w-2 sm:h-3 sm:w-3 text-emerald-400" viewBox="0 0 12 12" fill="none">
+                                <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </span>
+                            <span className="text-[10px] sm:text-sm font-medium text-slate-200">{feature}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="h-px bg-white/10 mb-4 sm:mb-6" />
+
+                    {/* CTA Buttons */}
+                    <div className="flex flex-col gap-2 sm:gap-3">
+                      <button
+                        onClick={() => openCheckout(mainPlan)}
+                        className="w-full rounded-lg sm:rounded-xl bg-gradient-to-r from-emerald-400 to-emerald-500 px-4 sm:px-6 py-2.5 sm:py-3.5 text-xs sm:text-sm font-semibold text-black transition hover:scale-[1.02] hover:shadow-lg hover:shadow-emerald-500/30 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-black"
+                      >
+                        Buy Now - Start Your Journey
+                      </button>
+
+                      <a
+                        href={getPlanWhatsappUrl(mainPlan, primaryPrice.price, primaryPrice.symbol)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 rounded-lg sm:rounded-xl border border-white/20 px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white transition hover:bg-white/10 hover:border-white/40"
+                      >
+                        <svg viewBox="0 0 32 32" fill="currentColor" className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-[#25D366]">
+                          <path d="M16.01 3C8.83 3 3 8.82 3 16c0 2.57.75 5.08 2.16 7.23L3 29l5.93-2.1A12.93 12.93 0 0016.01 29C23.18 29 29 23.18 29 16S23.18 3 16.01 3zm0 23.67c-2.13 0-4.22-.57-6.04-1.65l-.43-.25-3.52 1.25 1.15-3.62-.28-.45A10.58 10.58 0 015.33 16c0-5.89 4.79-10.68 10.68-10.68 2.85 0 5.52 1.11 7.54 3.13A10.59 10.59 0 0126.68 16c0 5.89-4.79 10.67-10.67 10.67zm5.86-7.94c-.32-.16-1.89-.93-2.18-1.04-.29-.11-.5-.16-.71.16-.21.32-.82 1.04-1.01 1.25-.18.21-.37.24-.69.08-.32-.16-1.35-.5-2.57-1.58-.95-.84-1.59-1.88-1.77-2.2-.18-.32-.02-.49.14-.65.14-.14.32-.37.48-.55.16-.18.21-.32.32-.53.11-.21.05-.4-.03-.55-.08-.16-.71-1.72-.98-2.35-.26-.62-.52-.54-.71-.55h-.61c-.21 0-.55.08-.84.4-.29.32-1.11 1.08-1.11 2.64 0 1.55 1.13 3.05 1.29 3.26.16.21 2.22 3.39 5.39 4.75.75.32 1.34.52 1.8.66.75.24 1.44.21 1.98.13.61-.09 1.89-.77 2.15-1.51.27-.74.27-1.38.19-1.51-.08-.13-.29-.21-.61-.37z" />
+                        </svg>
+                        Ask on WhatsApp
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-8 sm:p-12 text-center">
+                  <p className="text-xs sm:text-sm text-slate-400 font-medium">No diet plans available right now.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= CHECKOUT MODAL ================= */}
+      {selectedPlan && resolvedCheckoutPrice && (
+        <div className="fixed inset-0 z-[70] overflow-y-auto bg-black/80 px-4 py-6 backdrop-blur-sm sm:py-10">
+          <div className="mx-auto max-w-4xl overflow-hidden rounded-xl sm:rounded-2xl bg-white shadow-2xl">
+            
+            {/* MODAL HEADER */}
+            <div className="flex items-start justify-between gap-5 border-b border-slate-200 bg-black px-4 sm:px-6 py-4 sm:py-5 text-white">
+              <div>
+                <p className="text-[8px] sm:text-[10px] font-semibold uppercase tracking-[0.3em] text-emerald-300">
+                  Secure Checkout
+                </p>
+                <h3 className="mt-1 sm:mt-2 text-lg sm:text-2xl font-bold">
+                  {selectedPlan.name}
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-300">
+                  {resolvedCheckoutPrice.symbol}
+                  {resolvedCheckoutPrice.price} / {selectedPlan.duration}
                 </p>
               </div>
-            </div>
-          </div>
-
-          {/* RIGHT */}
-          <div className="relative">
-            <img
-              src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=1400&auto=format&fit=crop"
-              alt="diet plan"
-              className="h-[380px] w-full rounded-[36px] object-cover shadow-2xl sm:h-[520px] lg:h-[700px]"
-            />
-            <div className="absolute bottom-5 left-5 rounded-3xl border border-white/10 bg-black/40 p-5 backdrop-blur-xl">
-              <p className="text-sm text-zinc-300">Nutrition Coaching</p>
-              <h3 className="mt-1 text-3xl font-black">Fat Loss + Muscle Gain</h3>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ================= PLANS SECTION ================= */}
-      <section className="mx-auto max-w-7xl px-5 py-20 sm:px-8 lg:px-10">
-        <div className="mb-14 text-center">
-          <h2 className="text-4xl font-black sm:text-5xl lg:text-6xl">
-            Choose Your Plan
-          </h2>
-        </div>
-
-        {/* Responsive grid, cards have equal height buttons at bottom */}
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
-          {plans.map((plan, index) => (
-            <PlanCard key={plan._id} plan={plan} isPopular={index === 1} />
-          ))}
-        </div>
-      </section>
-
-      {/* ================= CTA ================= */}
-      <section className="px-5 pb-24 sm:px-8 lg:px-10">
-        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[42px] bg-black px-6 py-16 text-center text-white shadow-[0_30px_100px_rgba(0,0,0,0.18)] sm:px-10 sm:py-20">
-          <div className="absolute -left-20 top-0 h-[300px] w-[300px] rounded-full bg-lime-500/20 blur-3xl" />
-          <div className="absolute bottom-0 right-0 h-[300px] w-[300px] rounded-full bg-orange-500/10 blur-3xl" />
-
-          <div className="relative z-10">
-            <p className="mb-4 inline-flex rounded-full border border-lime-400/20 bg-lime-400/10 px-5 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-lime-300 sm:text-xs">
-              Expert Nutrition Coaching
-            </p>
-            <h2 className="text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">
-              Eat Better.
-              <br />
-              Transform Faster.
-            </h2>
-            <p className="mx-auto mt-8 max-w-3xl text-base leading-8 text-zinc-300 sm:text-lg sm:leading-9">
-              Expert online nutrition coaching with customized meal plans
-              designed for fat loss, muscle gain & complete transformation.
-            </p>
-            <div className="mt-12 flex justify-center">
-              <a
-                href={getAllPlansWhatsappUrl(plans)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 rounded-2xl bg-lime-400 px-8 py-5 text-lg font-black text-black transition duration-300 hover:scale-105"
+              <button
+                type="button"
+                onClick={closeCheckout}
+                className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-lg sm:text-xl font-light text-white transition hover:bg-white hover:text-black"
+                aria-label="Close checkout"
               >
-                Start Your Diet Plan
-                <span>→</span>
-              </a>
+                ✕
+              </button>
             </div>
+
+            {/* STEP: FORM */}
+            {checkoutStep === "form" && (
+              <form
+                onSubmit={proceedToPayment}
+                className="grid gap-3 sm:gap-4 p-4 sm:p-6 sm:grid-cols-2 sm:p-8"
+              >
+                <label className="sm:col-span-2">
+                  <span className="mb-1 block text-[10px] sm:text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+                    Plan Name
+                  </span>
+                  <input
+                    value={selectedPlan.name}
+                    readOnly
+                    className="h-10 sm:h-12 w-full rounded-lg sm:rounded-xl border border-slate-200 bg-slate-50 px-3 sm:px-4 text-xs sm:text-sm font-semibold text-slate-900 outline-none"
+                  />
+                </label>
+
+                <label>
+                  <span className="mb-1 block text-[10px] sm:text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+                    Buying From
+                  </span>
+                  <select
+                    value={checkoutForm.country}
+                    onChange={(e) => updateCheckoutField("country", e.target.value)}
+                    className="h-10 sm:h-12 w-full rounded-lg sm:rounded-xl border border-slate-200 bg-white px-3 sm:px-4 text-xs sm:text-sm font-semibold text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                  >
+                    {countryOptions.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  <span className="mb-1 block text-[10px] sm:text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+                    Amount Payable
+                  </span>
+                  <div className="flex h-10 sm:h-12 w-full items-center rounded-lg sm:rounded-xl border border-emerald-200 bg-emerald-50 px-3 sm:px-4 text-xs sm:text-sm font-bold text-slate-900">
+                    {resolvedCheckoutPrice.symbol}
+                    {resolvedCheckoutPrice.price}
+                    <span className="ml-1.5 sm:ml-2 text-[10px] sm:text-xs font-medium text-slate-500">
+                      ({resolvedCheckoutPrice.currencyCode})
+                    </span>
+                  </div>
+                </label>
+
+                <label>
+                  <span className="mb-1 block text-[10px] sm:text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+                    Full Name
+                  </span>
+                  <input
+                    required
+                    value={checkoutForm.name}
+                    onChange={(e) => updateCheckoutField("name", e.target.value)}
+                    className="h-10 sm:h-12 w-full rounded-lg sm:rounded-xl border border-slate-200 bg-white px-3 sm:px-4 text-xs sm:text-sm font-medium text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                    placeholder="Your full name"
+                  />
+                </label>
+
+                <label>
+                  <span className="mb-1 block text-[10px] sm:text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+                    Age
+                  </span>
+                  <input
+                    required
+                    type="number"
+                    min="10"
+                    value={checkoutForm.age}
+                    onChange={(e) => updateCheckoutField("age", e.target.value)}
+                    className="h-10 sm:h-12 w-full rounded-lg sm:rounded-xl border border-slate-200 bg-white px-3 sm:px-4 text-xs sm:text-sm font-medium text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                    placeholder="Age"
+                  />
+                </label>
+
+                <label>
+                  <span className="mb-1 block text-[10px] sm:text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+                    Gender
+                  </span>
+                  <select
+                    required
+                    value={checkoutForm.gender}
+                    onChange={(e) => updateCheckoutField("gender", e.target.value)}
+                    className="h-10 sm:h-12 w-full rounded-lg sm:rounded-xl border border-slate-200 bg-white px-3 sm:px-4 text-xs sm:text-sm font-medium text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                  >
+                    <option value="">Select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </label>
+
+                <label>
+                  <span className="mb-1 block text-[10px] sm:text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+                    Email ID
+                  </span>
+                  <input
+                    required
+                    type="email"
+                    value={checkoutForm.email}
+                    onChange={(e) => updateCheckoutField("email", e.target.value)}
+                    className="h-10 sm:h-12 w-full rounded-lg sm:rounded-xl border border-slate-200 bg-white px-3 sm:px-4 text-xs sm:text-sm font-medium text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                    placeholder="you@example.com"
+                  />
+                </label>
+
+                <label>
+                  <span className="mb-1 block text-[10px] sm:text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+                    Mobile Number
+                  </span>
+                  <input
+                    required
+                    inputMode="tel"
+                    value={checkoutForm.mobile}
+                    onChange={(e) => updateCheckoutField("mobile", e.target.value)}
+                    className="h-10 sm:h-12 w-full rounded-lg sm:rounded-xl border border-slate-200 bg-white px-3 sm:px-4 text-xs sm:text-sm font-medium text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                    placeholder="Mobile number"
+                  />
+                </label>
+
+                <label className="sm:col-span-2">
+                  <span className="mb-1 block text-[10px] sm:text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+                    Description
+                  </span>
+                  <textarea
+                    value={checkoutForm.description}
+                    onChange={(e) => updateCheckoutField("description", e.target.value)}
+                    className="min-h-[60px] sm:min-h-[80px] w-full resize-none rounded-lg sm:rounded-xl border border-slate-200 bg-white px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                    placeholder="Tell us about your current routine, schedule, or preference"
+                  />
+                </label>
+
+                <label>
+                  <span className="mb-1 block text-[10px] sm:text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+                    Past Injury
+                  </span>
+                  <textarea
+                    value={checkoutForm.pastInjury}
+                    onChange={(e) => updateCheckoutField("pastInjury", e.target.value)}
+                    className="min-h-[60px] sm:min-h-[80px] w-full resize-none rounded-lg sm:rounded-xl border border-slate-200 bg-white px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                    placeholder="Mention injuries, pain, or medical conditions"
+                  />
+                </label>
+
+                <label>
+                  <span className="mb-1 block text-[10px] sm:text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+                    Goal
+                  </span>
+                  <textarea
+                    required
+                    value={checkoutForm.goal}
+                    onChange={(e) => updateCheckoutField("goal", e.target.value)}
+                    className="min-h-[60px] sm:min-h-[80px] w-full resize-none rounded-lg sm:rounded-xl border border-slate-200 bg-white px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                    placeholder="Fat loss, muscle gain, athletics, strength, etc."
+                  />
+                </label>
+
+                <div className="sm:col-span-2">
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className={`flex min-h-[44px] sm:min-h-[52px] w-full items-center justify-center rounded-lg sm:rounded-xl bg-black px-4 sm:px-6 text-xs sm:text-sm font-semibold text-white transition ${
+                      submitting
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:bg-emerald-500 hover:text-black"
+                    } sm:w-auto`}
+                  >
+                    {submitting ? "Processing..." : "Proceed to Payment"}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* STEP: PAYMENT */}
+            {checkoutStep === "payment" && (
+              <div className="grid gap-4 sm:gap-6 p-4 sm:p-6 sm:grid-cols-2 lg:grid-cols-[1fr_0.82fr] sm:p-8">
+                <div className="rounded-lg sm:rounded-xl border border-slate-200 bg-slate-50 p-4 sm:p-6">
+                  <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                    Order Generated
+                  </p>
+                  <h4 className="mt-2 sm:mt-3 text-xl sm:text-2xl font-bold text-slate-900">{orderId}</h4>
+                  <div className="mt-4 sm:mt-6 grid gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium text-slate-600">
+                    <p>
+                      Plan: <span className="text-slate-900">{selectedPlan.name}</span>
+                    </p>
+                    <p>
+                      Buyer: <span className="text-slate-900">{checkoutForm.name}</span>
+                    </p>
+                    <p>
+                      Country: <span className="text-slate-900">{checkoutForm.country}</span>
+                    </p>
+                    <p>
+                      Amount:{" "}
+                      <span className="text-slate-900">
+                        {resolvedCheckoutPrice.symbol}
+                        {resolvedCheckoutPrice.price}{" "}
+                        <span className="text-[10px] sm:text-xs text-slate-500">
+                          ({resolvedCheckoutPrice.currencyCode})
+                        </span>
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-lg sm:rounded-xl bg-black p-4 sm:p-6 text-white">
+                  <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">
+                    UPI Payment
+                  </p>
+                  <h4 className="mt-2 sm:mt-3 text-lg sm:text-xl font-bold">Pay using UPI ID</h4>
+                  <div className="mt-3 sm:mt-4 rounded-lg sm:rounded-xl border border-white/10 bg-white/10 p-3 sm:p-4 text-base sm:text-lg font-bold text-emerald-300">
+                    {UPI_ID}
+                  </div>
+                  <p className="mt-3 sm:mt-4 text-xs sm:text-sm leading-5 sm:leading-6 text-slate-300">
+                    Complete the payment in your UPI app, then tap the button
+                    below to confirm your order.
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => setCheckoutStep("success")}
+                    className="mt-4 sm:mt-5 flex min-h-[44px] sm:min-h-[50px] w-full items-center justify-center rounded-lg sm:rounded-xl bg-emerald-400 px-4 sm:px-5 text-xs sm:text-sm font-semibold text-black transition hover:bg-white"
+                  >
+                    Payment Done
+                  </button>
+
+                  <a
+                    href={getPlanWhatsappUrl(
+                      selectedPlan,
+                      resolvedCheckoutPrice.price,
+                      resolvedCheckoutPrice.symbol
+                    )}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 sm:mt-3 flex min-h-[40px] sm:min-h-[48px] w-full items-center justify-center rounded-lg sm:rounded-xl border border-white/20 px-4 sm:px-5 text-xs sm:text-sm font-semibold text-white transition hover:bg-white hover:text-black"
+                  >
+                    Need Help On WhatsApp
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {/* STEP: SUCCESS */}
+            {checkoutStep === "success" && (
+              <div className="p-6 sm:p-8 text-center sm:p-12">
+                <div className="mx-auto flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-emerald-100 text-2xl sm:text-3xl font-bold text-emerald-700">
+                  ✓
+                </div>
+                <h4 className="mt-4 sm:mt-5 text-xl sm:text-2xl font-bold text-slate-900">
+                  Payment Successful
+                </h4>
+                <p className="mx-auto mt-2 sm:mt-3 max-w-xl text-xs sm:text-sm leading-6 sm:leading-7 text-slate-600">
+                  Your order {orderId} has been submitted. Our team will verify
+                  the payment and contact you with onboarding details.
+                </p>
+                <button
+                  type="button"
+                  onClick={closeCheckout}
+                  className="mt-5 sm:mt-6 min-h-[44px] sm:min-h-[50px] rounded-lg sm:rounded-xl bg-black px-6 sm:px-8 text-xs sm:text-sm font-semibold text-white transition hover:bg-emerald-500 hover:text-black"
+                >
+                  Done
+                </button>
+              </div>
+            )}
           </div>
         </div>
-      </section>
+      )}
 
       {/* ================= FLOATING WHATSAPP ================= */}
       <a
         href={getSimpleWhatsappUrl()}
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-5 right-5 z-50"
+        className="fixed bottom-4 right-4 z-50 sm:bottom-5 sm:right-5"
       >
-        <div className="flex h-[70px] w-[70px] items-center justify-center rounded-full bg-[#25D366] shadow-[0_15px_45px_rgba(37,211,102,0.45)] transition duration-300 hover:scale-105">
+        <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-[#25D366] shadow-lg shadow-[#25D366]/30 transition hover:scale-105">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 32 32"
             fill="white"
-            className="h-9 w-9"
+            className="h-6 w-6 sm:h-7 sm:w-7"
           >
             <path d="M16.01 3C8.83 3 3 8.82 3 16c0 2.57.75 5.08 2.16 7.23L3 29l5.93-2.1A12.93 12.93 0 0016.01 29C23.18 29 29 23.18 29 16S23.18 3 16.01 3zm0 23.67c-2.13 0-4.22-.57-6.04-1.65l-.43-.25-3.52 1.25 1.15-3.62-.28-.45A10.58 10.58 0 015.33 16c0-5.89 4.79-10.68 10.68-10.68 2.85 0 5.52 1.11 7.54 3.13A10.59 10.59 0 0126.68 16c0 5.89-4.79 10.67-10.67 10.67zm5.86-7.94c-.32-.16-1.89-.93-2.18-1.04-.29-.11-.5-.16-.71.16-.21.32-.82 1.04-1.01 1.25-.18.21-.37.24-.69.08-.32-.16-1.35-.5-2.57-1.58-.95-.84-1.59-1.88-1.77-2.2-.18-.32-.02-.49.14-.65.14-.14.32-.37.48-.55.16-.18.21-.32.32-.53.11-.21.05-.4-.03-.55-.08-.16-.71-1.72-.98-2.35-.26-.62-.52-.54-.71-.55h-.61c-.21 0-.55.08-.84.4-.29.32-1.11 1.08-1.11 2.64 0 1.55 1.13 3.05 1.29 3.26.16.21 2.22 3.39 5.39 4.75.75.32 1.34.52 1.8.66.75.24 1.44.21 1.98.13.61-.09 1.89-.77 2.15-1.51.27-.74.27-1.38.19-1.51-.08-.13-.29-.21-.61-.37z" />
           </svg>

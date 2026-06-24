@@ -2,6 +2,19 @@
 
 import { useEffect, useState } from "react";
 
+type BlogPost = {
+  title: string;
+  content?: string;
+  blogImage?: string;
+};
+
+type BlogApiResponse =
+  | BlogPost[]
+  | {
+      blogs?: BlogPost[];
+      data?: BlogPost[];
+    };
+
 // ================= WHATSAPP FUNCTION =================
 
 const WHATSAPP_NUMBER = "918585986111";
@@ -25,7 +38,7 @@ Thank you 🙌`;
 }
 
 export default function BlogPage() {
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<BlogPost[]>([]);
 
   // ================= GET BLOGS =================
 
@@ -34,14 +47,12 @@ export default function BlogPage() {
       "https://dinesh-sagel-backend.onrender.com/api/blogs/blogs"
     )
       .then((res) => res.json())
-      .then((data) => {
+      .then((data: BlogApiResponse) => {
         console.log(data);
 
-        setPosts(
-          data?.blogs ||
-          data?.data ||
-          data
-        );
+        const nextPosts = Array.isArray(data) ? data : data.blogs || data.data || [];
+
+        setPosts(nextPosts);
       })
       .catch((err) =>
         console.log(err)
@@ -52,7 +63,7 @@ export default function BlogPage() {
     <main
       style={{
         minHeight: "100vh",
-        background: "#d9cfb0",
+        background: "#0a0a0a",
         fontFamily: "'Georgia', serif",
       }}
     >
@@ -113,19 +124,30 @@ export default function BlogPage() {
           object-fit: contain;
           border-radius: 10px;
           display: block;
-          background: #eee;
+          background: #1a1a1a;
           margin: 0 auto;
+          border: 1px solid rgba(16, 185, 129, 0.2);
+          transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .blog-img:hover {
+          transform: scale(1.02);
+          box-shadow: 0 10px 40px rgba(16, 185, 129, 0.15);
         }
 
         .blog-article {
           margin-bottom: 2.5rem;
           padding-bottom: 2.5rem;
-          border-bottom: 1px solid rgba(0,0,0,0.1);
+          border-bottom: 1px solid rgba(16, 185, 129, 0.08);
+        }
+
+        .blog-article:last-child {
+          border-bottom: none;
         }
 
         .blog-content {
           font-size: 0.96rem;
-          color: #444;
+          color: #94a3b8;
           line-height: 1.85;
           margin-bottom: 0.85rem;
 
@@ -137,11 +159,17 @@ export default function BlogPage() {
         }
 
         .read-more-btn {
-          color: #3b7ec2;
+          color: #34d399;
           text-decoration: none;
           font-weight: 600;
           display: inline-block;
           margin-top: 0.3rem;
+          transition: color 0.3s, transform 0.3s;
+        }
+
+        .read-more-btn:hover {
+          color: #6ee7b7;
+          transform: translateX(4px);
         }
 
         @media (max-width: 1024px) {
@@ -153,6 +181,13 @@ export default function BlogPage() {
           .blog-images {
             position: static;
             align-items: center;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+          }
+
+          .blog-img {
+            max-width: 300px;
           }
         }
 
@@ -173,6 +208,11 @@ export default function BlogPage() {
           .blog-img {
             max-width: 100%;
           }
+
+          .blog-images {
+            flex-direction: column;
+            align-items: center;
+          }
         }
 
         @media (max-width: 480px) {
@@ -190,16 +230,33 @@ export default function BlogPage() {
           padding: "3rem 1rem 2.5rem",
         }}
       >
+        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.28em] text-emerald-300 backdrop-blur-sm mb-4">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+          </span>
+          Latest Updates
+        </div>
         <h1
           style={{
             fontSize: "clamp(2.5rem, 7vw, 4rem)",
             fontWeight: 900,
-            color: "#b8394a",
             margin: 0,
           }}
         >
-          Blogs
+          <span className="bg-gradient-to-r from-emerald-300 via-emerald-400 to-emerald-500 bg-clip-text text-transparent">
+            Blogs
+          </span>
         </h1>
+        <p
+          style={{
+            color: "#64748b",
+            fontSize: "1rem",
+            marginTop: "0.5rem",
+          }}
+        >
+          Fitness tips, guides, and transformation stories
+        </p>
       </div>
 
       {/* ================= MAIN LAYOUT ================= */}
@@ -211,7 +268,7 @@ export default function BlogPage() {
         <div>
           {posts.map(
             (
-              post: any,
+              post: BlogPost,
               i: number
             ) => (
               <article
@@ -227,7 +284,7 @@ export default function BlogPage() {
                     fontSize:
                       "clamp(1.1rem, 2.5vw, 1.55rem)",
                     fontWeight: 700,
-                    color: "#2a2a2a",
+                    color: "#f1f5f9",
                     marginBottom: "0.8rem",
                     lineHeight: 1.4,
                   }}
@@ -243,12 +300,12 @@ export default function BlogPage() {
 
                 {/* READ MORE */}
 
-                {post.content?.length > 350 && (
+                {(post.content?.length ?? 0) > 350 && (
                   <a
                     href="#"
                     className="read-more-btn"
                   >
-                    read more
+                    read more →
                   </a>
                 )}
               </article>
@@ -261,7 +318,7 @@ export default function BlogPage() {
         <div className="blog-images">
           {posts.map(
             (
-              post: any,
+              post: BlogPost,
               i: number
             ) => (
               <img

@@ -3,8 +3,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+import { AuthProvider } from "../app/auth-context";
+import AuthModal from "../app/auth-modal";
 import Header from "./header";
-import Footer from "./footer";
+import FooterSlot from "./footer-slot";
 
 export const metadata: Metadata = {
   title: "Dinesh Sehgal User Panel",
@@ -19,11 +21,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Header />
+        <AuthProvider>
+          <Header />
 
-        {children}
+          {children}
 
-        <Footer />
+          <FooterSlot />
+          <AuthModal />
+        </AuthProvider>
       </body>
     </html>
   );

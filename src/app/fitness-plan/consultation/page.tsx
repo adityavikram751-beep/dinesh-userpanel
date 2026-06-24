@@ -1,24 +1,81 @@
+
+
 "use client";
 
-import { useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 
-// ================= TYPE =================
+// ================= TYPES =================
+
+type PriceEntry = {
+  currencyCode: string;
+  price: number;
+  symbol: string;
+  _id: string;
+};
 
 type VideoPlan = {
   _id: string;
   title: string;
-  price: number | string;
+  price?: number | string;
+  currencyCode?: string;
+  allprice?: PriceEntry[];
   duration: string;
-  currencyCode?: string; // "GBP" | "USD" | "EUR" etc.
+  description?: string;
+  features?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 };
 
-// ================= WHATSAPP =================
+type CheckoutStep = "form" | "payment" | "success";
 
-const WHATSAPP_NUMBER = "917061771656";
+type CheckoutForm = {
+  country: string;
+  name: string;
+  age: string;
+  sex: string;
+  email: string;
+  mobile: string;
+  description: string;
+  pastInjury: string;
+  goal: string;
+};
 
-// Helper to get currency symbol from currency code
+// ================= CONSTANTS =================
+
+const WHATSAPP_NUMBER = "918585986111";
+const UPI_ID = "dineshsehgal@upi";
+
+const defaultCheckoutForm: CheckoutForm = {
+  country: "India",
+  name: "",
+  age: "",
+  sex: "",
+  email: "",
+  mobile: "",
+  description: "",
+  pastInjury: "",
+  goal: "",
+};
+
+const countryOptions = ["India", "United States", "United Kingdom", "Canada"];
+
+// ================= HELPERS =================
+
+function countryToCurrency(country: string): string {
+  switch (country) {
+    case "United States":
+      return "USD";
+    case "United Kingdom":
+      return "GBP";
+    case "Canada":
+      return "CAD";
+    default:
+      return "INR";
+  }
+}
+
 function getCurrencySymbol(currencyCode?: string): string {
-  if (!currencyCode) return "₹"; // default INR
+  if (!currencyCode) return "₹";
   switch (currencyCode.toUpperCase()) {
     case "GBP":
       return "£";
@@ -31,7 +88,33 @@ function getCurrencySymbol(currencyCode?: string): string {
   }
 }
 
-// ================= SIMPLE FLOATING =================
+function getOrderId() {
+  return `DSF-${Date.now().toString().slice(-6)}`;
+}
+
+function resolvePlanPrice(
+  plan: VideoPlan,
+  preferredCurrency: string = "INR"
+): { price: number | string; symbol: string; currencyCode: string } {
+  if (plan.allprice?.length) {
+    const match =
+      plan.allprice.find(
+        (p) => p.currencyCode.toUpperCase() === preferredCurrency.toUpperCase()
+      ) ?? plan.allprice[0];
+    return {
+      price: match.price,
+      symbol: match.symbol,
+      currencyCode: match.currencyCode,
+    };
+  }
+  return {
+    price: plan.price ?? "",
+    symbol: getCurrencySymbol(plan.currencyCode),
+    currencyCode: plan.currencyCode ?? "INR",
+  };
+}
+
+// ================= WHATSAPP HELPERS =================
 
 function getSimpleWhatsappUrl() {
   const message = `Hi DineshSehgal! 👋
@@ -45,76 +128,90 @@ Please guide me about:
 ✅ Workout Details
 
 Thank you 🙌`;
-
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
 
-// ================= ALL CARD DETAIL =================
-
-function getAllPlansWhatsappUrl(plans: VideoPlan[]) {
-  const plansText =
-    plans?.length > 0
-      ? plans
-          .map(
-            (plan, index) => `
-${index + 1}. ${plan.title}
-
-💰 Price: ${getCurrencySymbol(plan.currencyCode)}${plan.price || ""}
-
-⏳ Duration: ${plan.duration || ""}`
-          )
-          .join("\n\n")
-      : "";
+function getPlanWhatsappUrl(
+  plan: VideoPlan,
+  price: number | string,
+  symbol: string
+) {
+  const featuresText = plan.features?.length
+    ? plan.features
+        .slice(0, 5)
+        .map((f) => `• ${f}`)
+        .join("\n")
+    : "";
 
   const message = `Hi DineshSehgal! 👋
 
-I want consultation details.
+I want this consultation plan.
 
-Available Plans:
-${plansText}
+📹 Plan Name:
+${plan.title}
 
-Please guide me about:
-✅ Consultation Details
-✅ Fitness Guidance
-✅ Workout Help
-✅ Diet Help
-✅ Pricing
-✅ Booking Process
+💰 Price:
+${symbol}${price}
 
-Thank you 🙌`;
+⏳ Duration:
+${plan.duration}
 
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
-}
+📋 Plan Details:
+${plan.description || ""}
 
-// ================= SINGLE CARD DETAIL =================
+🔥 Features:
+${featuresText}
 
-function getConsultationWhatsappUrl(plan?: VideoPlan) {
-  const message = `Hi DineshSehgal! 👋
-
-I want to book this consultation plan.
-
-📹 Consultation Plan: ${plan?.title || ""}
-
-💰 Price: ${getCurrencySymbol(plan?.currencyCode)}${plan?.price || ""}
-
-⏳ Duration: ${plan?.duration || ""}
-
-Please share:
-✅ Consultation Details
-✅ Booking Process
-✅ Fitness Guidance
-
-Thank you 🙌`;
+Please share complete details 🙌`;
 
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
 
-// ================= PAGE =================
+// ================= WHAT YOU GET FEATURES =================
+
+const whatYouGetFeatures = [
+  {
+    title: "1-on-1 Personal Coaching",
+    desc: "Personalized attention for your fitness goals",
+  },
+  {
+    title: "Daily Monitoring",
+    desc: "Track your progress every single day",
+  },
+  {
+    title: "Custom Meal Adjustments",
+    desc: "Meal plans tailored to your body needs",
+  },
+  {
+    title: "Live Video Sessions",
+    desc: "Real-time coaching and form correction",
+  },
+  {
+    title: "Direct Personal Support",
+    desc: "Get your questions answered instantly",
+  },
+  {
+    title: "Fast Response Priority",
+    desc: "Quick responses whenever you need help",
+  },
+  {
+    title: "Full Lifestyle Management",
+    desc: "Complete holistic fitness approach",
+  },
+];
+
+// ================= MAIN PAGE =================
 
 export default function ConsultationPage() {
   const [videoPlans, setVideoPlans] = useState<VideoPlan[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState<VideoPlan | null>(null);
+  const [checkoutStep, setCheckoutStep] = useState<CheckoutStep>("form");
+  const [checkoutForm, setCheckoutForm] =
+    useState<CheckoutForm>(defaultCheckoutForm);
+  const [orderId, setOrderId] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  // ================= LOAD =================
+  // ================= LOAD PLANS =================
 
   useEffect(() => {
     async function loadPlans() {
@@ -123,7 +220,6 @@ export default function ConsultationPage() {
           `https://dinesh-sagel-backend.onrender.com/api/video-plans`
         );
         const data = await res.json();
-        console.log("VIDEO PLANS =>", data);
 
         if (Array.isArray(data)) {
           setVideoPlans(data);
@@ -138,25 +234,53 @@ export default function ConsultationPage() {
         }
       } catch (error) {
         console.log(error);
+      } finally {
+        setLoading(false);
       }
     }
 
     loadPlans();
   }, []);
 
+  // ================= CHECKOUT FUNCTIONS =================
+
+  function openCheckout(plan: VideoPlan) {
+    setSelectedPlan(plan);
+    setCheckoutStep("form");
+    setCheckoutForm(defaultCheckoutForm);
+    setOrderId("");
+  }
+
+  function closeCheckout() {
+    setSelectedPlan(null);
+    setCheckoutStep("form");
+    setOrderId("");
+  }
+
+  function updateCheckoutField(field: keyof CheckoutForm, value: string) {
+    setCheckoutForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function proceedToPayment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setOrderId(getOrderId());
+    setCheckoutStep("payment");
+  }
+
+  const resolvedCheckoutPrice = selectedPlan
+    ? resolvePlanPrice(selectedPlan, countryToCurrency(checkoutForm.country))
+    : null;
+
   // ================= UI =================
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#f4f7f5] text-zinc-900">
+    <main className="min-h-screen overflow-hidden bg-[#f5f5f5] text-zinc-900">
       {/* ================= HERO ================= */}
 
       <section className="relative overflow-hidden bg-[#0b0f0d] text-white">
-        {/* BG */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#07130d] via-[#0b0f0d] to-[#101010]" />
-
-        {/* GLOW */}
         <div className="absolute -left-24 top-0 h-[320px] w-[320px] rounded-full bg-emerald-500/20 blur-3xl" />
-        <div className="absolute bottom-0 right-0 h-[320px] w-[320px] rounded-full bg-orange-500/10 blur-3xl" />
+        <div className="absolute bottom-0 right-0 h-[320px] w-[320px] rounded-full bg-emerald-400/10 blur-3xl" />
 
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 py-14 sm:px-8 lg:grid-cols-2 lg:px-10 lg:py-24">
           {/* LEFT */}
@@ -177,26 +301,14 @@ export default function ConsultationPage() {
               transformation.
             </p>
 
-            {/* BUTTONS */}
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-              {/* ALL CARD DETAILS */}
               <a
-                href={getAllPlansWhatsappUrl(videoPlans)}
+                href={getSimpleWhatsappUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center rounded-2xl bg-emerald-400 px-7 py-4 text-sm font-black text-black shadow-[0_15px_40px_rgba(52,211,153,0.35)] transition duration-300 hover:scale-105 hover:bg-emerald-300 sm:text-base"
               >
                 Book Consultation
-              </a>
-
-              {/* SIMPLE */}
-              <a
-                href={getSimpleWhatsappUrl()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center rounded-2xl border border-white/15 bg-white/10 px-7 py-4 text-sm font-black backdrop-blur transition duration-300 hover:bg-white/20 sm:text-base"
-              >
-                WhatsApp Now
               </a>
             </div>
 
@@ -233,7 +345,6 @@ export default function ConsultationPage() {
               className="h-[380px] w-full rounded-[40px] object-cover shadow-[0_30px_100px_rgba(0,0,0,0.4)] sm:h-[520px] lg:h-[700px]"
             />
 
-            {/* FLOAT CARD */}
             <div className="absolute bottom-5 left-5 rounded-3xl border border-white/10 bg-black/40 p-5 backdrop-blur-xl">
               <p className="text-sm text-zinc-300">Trusted By</p>
               <h3 className="mt-1 text-3xl font-black">500+ Clients</h3>
@@ -242,12 +353,19 @@ export default function ConsultationPage() {
         </div>
       </section>
 
-      {/* ================= FEATURES ================= */}
+      {/* ================= WHAT YOU'LL GET — CLEAN, NO ICONS, NO NUMBERS, NO LINES ================= */}
 
       <section className="mx-auto max-w-7xl px-5 py-20 sm:px-8 lg:px-10">
         <div className="mb-14 text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.28em] text-emerald-600 backdrop-blur-sm mb-4">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+            </span>
+            Benefits
+          </div>
           <h2 className="text-4xl font-black sm:text-5xl lg:text-6xl">
-            What You'll Get
+            What You'll <span className="text-emerald-500">Get</span>
           </h2>
           <p className="mx-auto mt-5 max-w-3xl text-base leading-8 text-zinc-600 sm:text-lg">
             Premium personalized coaching designed to help you achieve real
@@ -255,61 +373,25 @@ export default function ConsultationPage() {
           </p>
         </div>
 
-        {/* GRID */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            {
-              title: "Fat Loss Strategy",
-              icon: "🔥",
-            },
-            {
-              title: "Muscle Building",
-              icon: "💪",
-            },
-            {
-              title: "Workout Guidance",
-              icon: "🏋️",
-            },
-            {
-              title: "Nutrition Advice",
-              icon: "🥗",
-            },
-            {
-              title: "Supplement Guidance",
-              icon: "⚡",
-            },
-            {
-              title: "Lifestyle Coaching",
-              icon: "🧠",
-            },
-            {
-              title: "Goal Planning",
-              icon: "🎯",
-            },
-            {
-              title: "WhatsApp Support",
-              icon: "📲",
-            },
-          ].map((item) => (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {whatYouGetFeatures.map((item) => (
             <div
               key={item.title}
-              className="group rounded-[32px] border border-zinc-200 bg-white p-7 shadow-[0_15px_40px_rgba(0,0,0,0.06)] transition duration-300 hover:-translate-y-2 hover:border-emerald-400 hover:bg-[#0f1110] hover:text-white hover:shadow-[0_25px_60px_rgba(16,185,129,0.18)]"
+              className="group relative rounded-2xl bg-white p-7 shadow-[0_10px_30px_rgba(0,0,0,0.04)] transition-all duration-500 hover:-translate-y-3 hover:shadow-[0_20px_60px_rgba(0,0,0,0.08)]"
             >
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-100 text-3xl">
-                {item.icon}
-              </div>
-              <h3 className="mt-6 text-2xl font-black leading-tight">
+              {/* Clean minimal card — just title + description */}
+              <h3 className="text-lg font-black leading-tight text-zinc-900 transition-colors duration-300 group-hover:text-emerald-600">
                 {item.title}
               </h3>
-              <p className="mt-4 text-[15px] leading-7 text-zinc-500 transition group-hover:text-zinc-300">
-                Personalized expert guidance according to your fitness goals.
+              <p className="mt-3 text-sm leading-6 text-zinc-500">
+                {item.desc}
               </p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ================= PRICING ================= */}
+      {/* ================= PRICING SECTION ================= */}
 
       <section className="mx-auto max-w-7xl px-5 pb-24 sm:px-8 lg:px-10">
         <div className="overflow-hidden rounded-[42px] bg-[#0f1110] text-white shadow-[0_30px_100px_rgba(0,0,0,0.2)]">
@@ -330,62 +412,407 @@ export default function ConsultationPage() {
               </p>
             </div>
 
-            {/* RIGHT - SCROLLABLE WITH HIDDEN SCROLLBAR */}
+            {/* RIGHT - Single Card */}
             <div className="p-6 sm:p-8 lg:p-14">
-              <div
-                className="grid gap-5 max-h-[400px] md:max-h-[460px] lg:max-h-[500px] overflow-y-auto scrollbar-hide"
-                style={{
-                  scrollbarWidth: "none", // Firefox
-                  msOverflowStyle: "none", // IE/Edge
-                }}
-              >
-                <style jsx>{`
-                  div::-webkit-scrollbar {
-                    display: none; /* Chrome/Safari/Opera */
-                  }
-                `}</style>
-                {videoPlans.length > 0 ? (
-                  videoPlans.map((plan) => (
+              {loading ? (
+                <div className="rounded-[32px] border border-white/10 bg-white/5 p-10 text-center">
+                  <div className="mx-auto h-10 w-10 rounded-full border-4 border-emerald-400 border-t-transparent animate-spin" />
+                  <p className="mt-4 text-sm text-zinc-400">Loading Plans...</p>
+                </div>
+              ) : videoPlans.length > 0 ? (
+                videoPlans.map((plan) => {
+                  const primaryPrice = plan.allprice?.[0] ?? {
+                    symbol: getCurrencySymbol(plan.currencyCode),
+                    price: plan.price ?? "",
+                    currencyCode: plan.currencyCode ?? "INR",
+                  };
+                  const otherPrices = plan.allprice?.slice(1) ?? [];
+
+                  return (
                     <div
                       key={plan._id}
-                      className="rounded-[32px] border border-white/10 bg-white/5 p-6 sm:p-7 backdrop-blur transition duration-300 hover:scale-[1.02] hover:border-emerald-400"
+                      className="rounded-[32px] border border-white/10 bg-white/5 p-7 backdrop-blur transition duration-300 hover:scale-[1.02] hover:border-emerald-400"
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div className="flex flex-col gap-4">
                         <div>
-                          <p className="text-xs uppercase tracking-[0.28em] text-zinc-400">
+                          {/* Plan Title - made BIG */}
+                          <p className="text-2xl sm:text-3xl font-black uppercase tracking-wider text-white">
                             {plan.title}
                           </p>
-                          <h3 className="mt-2 text-3xl sm:text-4xl lg:text-5xl font-black">
-                            {getCurrencySymbol(plan.currencyCode)}
-                            {Number(plan.price) || 0}
-                          </h3>
-                        </div>
-                        <div className="rounded-2xl bg-emerald-400 px-4 py-2 sm:px-5 sm:py-3 text-sm font-black text-black self-start sm:self-center whitespace-nowrap">
-                          {plan.duration || "30 MIN"}
-                        </div>
-                      </div>
 
-                      {/* BOOK BUTTON */}
-                      <a
-                        href={getConsultationWhatsappUrl(plan)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-6 flex items-center justify-center rounded-2xl bg-emerald-400 px-6 py-4 text-sm font-black text-black transition duration-300 hover:scale-[1.02]"
-                      >
-                        Book This Plan
-                      </a>
+                          {/* Primary Price (INR) */}
+                          <div className="mt-3 flex items-baseline gap-3">
+                            <h3 className="text-4xl sm:text-5xl lg:text-6xl font-black">
+                              {primaryPrice.symbol}
+                              {primaryPrice.price}
+                            </h3>
+                            <span className="rounded-full bg-emerald-400/20 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-300 border border-emerald-400/30">
+                              {primaryPrice.currencyCode}
+                            </span>
+                          </div>
+
+                          {/* Other Currencies - bigger and more prominent */}
+                          {otherPrices.length > 0 && (
+                            <div className="flex flex-wrap gap-3 mt-4">
+                              {otherPrices.map((p) => (
+                                <span
+                                  key={p._id}
+                                  className="inline-flex items-center gap-1 rounded-full bg-white/10 px-4 py-2 text-base sm:text-lg font-bold text-zinc-200 border border-white/20"
+                                >
+                                  {p.symbol}
+                                  {p.price}
+                                  <span className="text-xs font-medium text-zinc-400 uppercase ml-1">
+                                    {p.currencyCode}
+                                  </span>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="rounded-2xl bg-emerald-400/20 border border-emerald-400/30 px-4 py-2 sm:px-5 sm:py-3 text-sm font-black text-emerald-300 self-start whitespace-nowrap">
+                          ⏱ {plan.duration || "30 MIN"}
+                        </div>
+
+                        {/* BOOK BUTTON */}
+                        <button
+                          onClick={() => openCheckout(plan)}
+                          className="mt-2 flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-400 to-emerald-500 px-6 py-4 text-sm font-black text-black shadow-lg shadow-emerald-500/30 transition duration-300 hover:scale-[1.02] hover:shadow-emerald-500/50"
+                        >
+                          Buy Now
+                        </button>
+                      </div>
                     </div>
-                  ))
-                ) : (
-                  <div className="rounded-[32px] border border-white/10 bg-white/5 p-7 text-center">
-                    Loading Plans...
-                  </div>
-                )}
-              </div>
+                  );
+                })
+              ) : (
+                <div className="rounded-[32px] border border-white/10 bg-white/5 p-10 text-center">
+                  <p className="text-zinc-400">No plans available</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </section>
+
+      {/* ================= CHECKOUT MODAL ================= */}
+      {selectedPlan && resolvedCheckoutPrice && (
+        <div className="fixed inset-0 z-[70] overflow-y-auto bg-black/70 px-4 py-6 backdrop-blur-sm sm:py-10">
+          <div className="mx-auto max-w-4xl overflow-hidden rounded-[28px] bg-white shadow-[0_30px_90px_rgba(0,0,0,0.35)]">
+            {/* MODAL HEADER */}
+            <div className="flex items-start justify-between gap-5 border-b border-zinc-200 bg-zinc-950 px-6 py-6 text-white sm:px-8">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-300">
+                  Secure Checkout
+                </p>
+                <h3 className="mt-3 text-2xl font-black sm:text-3xl">
+                  {selectedPlan.title}
+                </h3>
+                <p className="mt-2 text-sm text-zinc-300">
+                  {resolvedCheckoutPrice.symbol}
+                  {resolvedCheckoutPrice.price} / {selectedPlan.duration}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeCheckout}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-2xl font-light text-white transition hover:bg-white hover:text-black"
+                aria-label="Close checkout"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* STEP: FORM */}
+            {checkoutStep === "form" && (
+              <form
+                onSubmit={proceedToPayment}
+                className="grid gap-5 p-6 sm:grid-cols-2 sm:p-8"
+              >
+                <label className="sm:col-span-2">
+                  <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-zinc-500">
+                    Plan Name
+                  </span>
+                  <input
+                    value={selectedPlan.title}
+                    readOnly
+                    className="h-14 w-full rounded-2xl border border-zinc-200 bg-zinc-100 px-5 text-base font-black text-zinc-950 outline-none"
+                  />
+                </label>
+
+                <label>
+                  <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-zinc-500">
+                    Buying From
+                  </span>
+                  <select
+                    value={checkoutForm.country}
+                    onChange={(e) =>
+                      updateCheckoutField("country", e.target.value)
+                    }
+                    className="h-14 w-full rounded-2xl border border-zinc-200 bg-white px-5 text-base font-bold text-zinc-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+                  >
+                    {countryOptions.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-zinc-500">
+                    Amount Payable
+                  </span>
+                  <div className="flex h-14 w-full items-center rounded-2xl border border-emerald-300 bg-emerald-50 px-5 text-base font-black text-zinc-950">
+                    {resolvedCheckoutPrice.symbol}
+                    {resolvedCheckoutPrice.price}
+                    <span className="ml-2 text-xs font-bold text-zinc-400">
+                      ({resolvedCheckoutPrice.currencyCode})
+                    </span>
+                  </div>
+                </label>
+
+                <label>
+                  <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-zinc-500">
+                    Name
+                  </span>
+                  <input
+                    required
+                    value={checkoutForm.name}
+                    onChange={(e) =>
+                      updateCheckoutField("name", e.target.value)
+                    }
+                    className="h-14 w-full rounded-2xl border border-zinc-200 bg-white px-5 text-base font-semibold text-zinc-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+                    placeholder="Your full name"
+                  />
+                </label>
+
+                <label>
+                  <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-zinc-500">
+                    Age
+                  </span>
+                  <input
+                    required
+                    type="number"
+                    min="10"
+                    value={checkoutForm.age}
+                    onChange={(e) =>
+                      updateCheckoutField("age", e.target.value)
+                    }
+                    className="h-14 w-full rounded-2xl border border-zinc-200 bg-white px-5 text-base font-semibold text-zinc-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+                    placeholder="Age"
+                  />
+                </label>
+
+                <label>
+                  <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-zinc-500">
+                    Sex
+                  </span>
+                  <select
+                    required
+                    value={checkoutForm.sex}
+                    onChange={(e) =>
+                      updateCheckoutField("sex", e.target.value)
+                    }
+                    className="h-14 w-full rounded-2xl border border-zinc-200 bg-white px-5 text-base font-bold text-zinc-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+                  >
+                    <option value="">Select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </label>
+
+                <label>
+                  <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-zinc-500">
+                    Email ID
+                  </span>
+                  <input
+                    required
+                    type="email"
+                    value={checkoutForm.email}
+                    onChange={(e) =>
+                      updateCheckoutField("email", e.target.value)
+                    }
+                    className="h-14 w-full rounded-2xl border border-zinc-200 bg-white px-5 text-base font-semibold text-zinc-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+                    placeholder="you@example.com"
+                  />
+                </label>
+
+                <label>
+                  <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-zinc-500">
+                    Mobile Number
+                  </span>
+                  <input
+                    required
+                    inputMode="tel"
+                    value={checkoutForm.mobile}
+                    onChange={(e) =>
+                      updateCheckoutField("mobile", e.target.value)
+                    }
+                    className="h-14 w-full rounded-2xl border border-zinc-200 bg-white px-5 text-base font-semibold text-zinc-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+                    placeholder="Mobile number"
+                  />
+                </label>
+
+                <label className="sm:col-span-2">
+                  <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-zinc-500">
+                    Description
+                  </span>
+                  <textarea
+                    value={checkoutForm.description}
+                    onChange={(e) =>
+                      updateCheckoutField("description", e.target.value)
+                    }
+                    className="min-h-[110px] w-full resize-none rounded-2xl border border-zinc-200 bg-white px-5 py-4 text-base font-semibold text-zinc-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+                    placeholder="Tell us about your current routine, schedule, or preference"
+                  />
+                </label>
+
+                <label>
+                  <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-zinc-500">
+                    Any Past Injury
+                  </span>
+                  <textarea
+                    value={checkoutForm.pastInjury}
+                    onChange={(e) =>
+                      updateCheckoutField("pastInjury", e.target.value)
+                    }
+                    className="min-h-[96px] w-full resize-none rounded-2xl border border-zinc-200 bg-white px-5 py-4 text-base font-semibold text-zinc-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+                    placeholder="Mention injuries, pain, or medical conditions"
+                  />
+                </label>
+
+                <label>
+                  <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-zinc-500">
+                    Goal
+                  </span>
+                  <textarea
+                    required
+                    value={checkoutForm.goal}
+                    onChange={(e) =>
+                      updateCheckoutField("goal", e.target.value)
+                    }
+                    className="min-h-[96px] w-full resize-none rounded-2xl border border-zinc-200 bg-white px-5 py-4 text-base font-semibold text-zinc-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+                    placeholder="Fat loss, muscle gain, athletics, strength, etc."
+                  />
+                </label>
+
+                <div className="sm:col-span-2">
+                  <button
+                    type="submit"
+                    className="flex min-h-[58px] w-full items-center justify-center rounded-2xl bg-zinc-900 px-6 text-sm font-black uppercase tracking-[0.18em] text-white transition hover:bg-emerald-400 hover:text-black sm:w-auto"
+                  >
+                    Proceed to Payment
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* STEP: PAYMENT */}
+            {checkoutStep === "payment" && (
+              <div className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[1fr_0.82fr]">
+                <div className="rounded-[24px] border border-zinc-200 bg-zinc-50 p-6">
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500">
+                    Order Generated
+                  </p>
+                  <h4 className="mt-3 text-3xl font-black text-zinc-950">
+                    {orderId}
+                  </h4>
+                  <div className="mt-6 grid gap-3 text-sm font-semibold text-zinc-600">
+                    <p>
+                      Plan:{" "}
+                      <span className="text-zinc-950">
+                        {selectedPlan.title}
+                      </span>
+                    </p>
+                    <p>
+                      Buyer:{" "}
+                      <span className="text-zinc-950">
+                        {checkoutForm.name}
+                      </span>
+                    </p>
+                    <p>
+                      Country:{" "}
+                      <span className="text-zinc-950">
+                        {checkoutForm.country}
+                      </span>
+                    </p>
+                    <p>
+                      Amount:{" "}
+                      <span className="text-zinc-950">
+                        {resolvedCheckoutPrice.symbol}
+                        {resolvedCheckoutPrice.price}{" "}
+                        <span className="text-xs text-zinc-400">
+                          ({resolvedCheckoutPrice.currencyCode})
+                        </span>
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-[24px] bg-zinc-900 p-6 text-white">
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-300">
+                    UPI Payment
+                  </p>
+                  <h4 className="mt-3 text-2xl font-black">Pay using UPI ID</h4>
+                  <div className="mt-5 rounded-2xl border border-white/10 bg-white/10 p-4 text-xl font-black text-emerald-300">
+                    {UPI_ID}
+                  </div>
+                  <p className="mt-4 text-sm leading-6 text-zinc-300">
+                    Complete the payment in your UPI app, then tap the button
+                    below to confirm your order.
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => setCheckoutStep("success")}
+                    className="mt-6 flex min-h-[56px] w-full items-center justify-center rounded-2xl bg-emerald-400 px-5 text-sm font-black uppercase tracking-[0.16em] text-black transition hover:bg-white"
+                  >
+                    Payment Done
+                  </button>
+
+                  <a
+                    href={getPlanWhatsappUrl(
+                      selectedPlan,
+                      resolvedCheckoutPrice.price,
+                      resolvedCheckoutPrice.symbol
+                    )}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 flex min-h-[52px] w-full items-center justify-center rounded-2xl border border-white/20 px-5 text-sm font-black text-white transition hover:bg-white hover:text-black"
+                  >
+                    Need Help On WhatsApp
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {/* STEP: SUCCESS */}
+            {checkoutStep === "success" && (
+              <div className="p-8 text-center sm:p-12">
+                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-4xl font-black text-emerald-700">
+                  ✓
+                </div>
+                <h4 className="mt-6 text-3xl font-black text-zinc-950">
+                  Payment Successful
+                </h4>
+                <p className="mx-auto mt-4 max-w-xl text-base leading-8 text-zinc-600">
+                  Your order {orderId} has been submitted. Our team will verify
+                  the payment and contact you with onboarding details.
+                </p>
+                <button
+                  type="button"
+                  onClick={closeCheckout}
+                  className="mt-8 min-h-[56px] rounded-2xl bg-zinc-900 px-8 text-sm font-black uppercase tracking-[0.16em] text-white transition hover:bg-emerald-400 hover:text-black"
+                >
+                  Done
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ================= FLOATING WHATSAPP ================= */}
 

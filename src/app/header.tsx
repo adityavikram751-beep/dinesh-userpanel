@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "./auth-context";
 
 // ================= TYPES =================
 
@@ -39,7 +40,7 @@ const navItems: NavItem[] = [
         href: "/fitness-plan",
 
         label:
-          "Transformation Plans",
+          "Online Coaching",
 
         desc:
           "Workout & Transformation",
@@ -51,7 +52,7 @@ const navItems: NavItem[] = [
         href:
           "/fitness-plan/dietplan",
 
-        label: "Diet Plans",
+        label: "Customized Nutrition",
 
         desc:
           "Nutrition & Meal Plans",
@@ -64,7 +65,7 @@ const navItems: NavItem[] = [
           "/fitness-plan/consultation",
 
         label:
-          "Video Consultation",
+          "1-1 VIP Coaching",
 
         desc:
           "1-on-1 Expert Guidance",
@@ -92,6 +93,7 @@ const navItems: NavItem[] = [
 
 // ================= JOIN NOW WHATSAPP =================
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getJoinNowWhatsappUrl() {
 
   const message = `🔥 Hi DineshSehgal Team! 👋
@@ -130,18 +132,40 @@ export default function Header() {
     setDropdownOpen,
   ] = useState(false);
 
+  const [
+    accountOpen,
+    setAccountOpen,
+  ] = useState(false);
+
+  const { user, openAuthModal, logout } = useAuth();
+
+  const displayName =
+    user?.name ||
+    user?.email.split("@")[0] ||
+    "User";
+
+  const accountInitials = displayName
+    .split(" ")
+    .map((item) => item[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
     <>
       {/* ================= OVERLAY ================= */}
 
-      {dropdownOpen && (
+      {(dropdownOpen || accountOpen) && (
         <div
           className="fixed inset-0 z-40"
-          onClick={() =>
+          onClick={() => {
             setDropdownOpen(
               false
-            )
-          }
+            );
+            setAccountOpen(
+              false
+            );
+          }}
         />
       )}
 
@@ -216,6 +240,10 @@ export default function Header() {
                       ) => {
 
                         e.stopPropagation();
+
+                        setAccountOpen(
+                          false
+                        );
 
                         setDropdownOpen(
                           !dropdownOpen
@@ -437,27 +465,103 @@ export default function Header() {
 
             {/* CTA */}
 
-            <a
-              href={getJoinNowWhatsappUrl()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-2xl bg-black px-6 py-3 text-sm font-black text-white shadow-lg transition duration-300 hover:scale-105 hover:bg-zinc-800"
-            >
-
-              Join Now
-
-            </a>
+            {/* Join Now removed per request - Login/Logout retained */}
+            {user ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setDropdownOpen(false);
+                    setAccountOpen(!accountOpen);
+                  }}
+                  className="flex max-w-[260px] items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-left shadow-sm transition hover:border-zinc-300 hover:bg-white"
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-950 text-xs font-black text-white">
+                    {accountInitials}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                      Account
+                    </span>
+                    <span className="block truncate text-sm font-black text-zinc-950">
+                      {displayName}
+                    </span>
+                  </span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className={`h-4 w-4 shrink-0 text-zinc-500 transition ${accountOpen ? "rotate-180" : ""}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div
+                  onClick={(event) => event.stopPropagation()}
+                  className={`absolute right-0 top-[58px] z-50 w-[260px] overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-[0_20px_60px_rgba(0,0,0,0.14)] transition-all duration-200 ${
+                    accountOpen
+                      ? "visible translate-y-0 opacity-100"
+                      : "invisible -translate-y-2 opacity-0"
+                  }`}
+                >
+                  <div className="border-b border-zinc-100 px-4 py-4">
+                    <p className="truncate text-sm font-black text-zinc-950">{displayName}</p>
+                    <p className="mt-1 truncate text-xs font-semibold text-zinc-500">{user.email}</p>
+                  </div>
+                  <div className="p-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAccountOpen(false);
+                        logout();
+                      }}
+                      className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-black text-zinc-800 transition hover:bg-zinc-100"
+                    >
+                      Logout
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4 text-zinc-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2.5}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9l-3 3m0 0 3 3m-3-3h12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => openAuthModal("login")}
+                className="rounded-2xl bg-zinc-950 px-6 py-3 text-sm font-black text-white shadow-lg transition duration-300 hover:scale-105 hover:bg-zinc-800"
+              >
+                Login
+              </button>
+            )}
 
           </div>
 
           {/* ================= MOBILE BUTTON ================= */}
 
           <button
-            onClick={() =>
+            onClick={() => {
+              setAccountOpen(
+                false
+              );
+              setDropdownOpen(
+                false
+              );
               setMenuOpen(
                 !menuOpen
-              )
-            }
+              );
+            }}
             className="flex h-11 w-11 items-center justify-center rounded-full border border-zinc-300 text-xl lg:hidden"
           >
 
@@ -698,16 +802,85 @@ export default function Header() {
 
             {/* CTA */}
 
-            <a
-              href={getJoinNowWhatsappUrl()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 flex items-center justify-center rounded-2xl bg-black px-5 py-4 text-sm font-black text-white shadow-lg"
-            >
-
-              Join Now
-
-            </a>
+            <div className="mt-3 flex w-full flex-col gap-3">
+              {user ? (
+                <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50">
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setAccountOpen(!accountOpen);
+                    }}
+                    className="flex w-full items-center gap-3 px-4 py-4 text-left"
+                  >
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-zinc-950 text-sm font-black text-white">
+                      {accountInitials}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                        Account
+                      </span>
+                      <span className="block truncate text-sm font-black text-zinc-950">
+                        {displayName}
+                      </span>
+                    </span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className={`h-5 w-5 shrink-0 text-zinc-500 transition ${accountOpen ? "rotate-180" : ""}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2.5}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  <div
+                    className={`grid transition-all duration-300 ${
+                      accountOpen
+                        ? "grid-rows-[1fr]"
+                        : "grid-rows-[0fr]"
+                    }`}
+                  >
+                    <div className="overflow-hidden">
+                      <div className="border-t border-zinc-200 p-3">
+                        <p className="truncate px-2 pb-3 text-xs font-semibold text-zinc-500">{user.email}</p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAccountOpen(false);
+                            setMenuOpen(false);
+                            logout();
+                          }}
+                          className="flex w-full items-center justify-between rounded-xl bg-white px-4 py-3 text-sm font-black text-zinc-900 shadow-sm"
+                        >
+                          Logout
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4 text-zinc-500"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2.5}
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9l-3 3m0 0 3 3m-3-3h12" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => openAuthModal("login")}
+                  className="flex w-full items-center justify-center rounded-2xl bg-zinc-950 px-5 py-4 text-sm font-black text-white shadow-lg"
+                >
+                  Login
+                </button>
+              )}
+            </div>
 
           </div>
 
