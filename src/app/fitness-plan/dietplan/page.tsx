@@ -33,6 +33,7 @@ type CheckoutStep = "form" | "payment" | "success";
 
 type CheckoutForm = {
   currencyCode: string;
+  plantype: string;
   name: string;
   age: string;
   sex: string;
@@ -50,6 +51,7 @@ const UPI_ID = "dineshsehgal@upi";
 
 const defaultCheckoutForm: CheckoutForm = {
   currencyCode: "INR",
+  plantype: "transformationPlan",
   name: "",
   age: "",
   sex: "",
@@ -257,6 +259,7 @@ export default function DietPlanPage() {
       // STEP 1: Create payload for purchase
       const payload = {
         course_id: selectedPlan._id,
+        plantype: checkoutForm.plantype,
         full_name: checkoutForm.name,
         age: parseInt(checkoutForm.age),
         sex: checkoutForm.sex,
@@ -658,6 +661,24 @@ export default function DietPlanPage() {
                     readOnly
                     className="h-10 sm:h-12 w-full rounded-lg sm:rounded-xl border border-slate-200 bg-slate-50 px-3 sm:px-4 text-xs sm:text-sm font-semibold text-slate-900 outline-none"
                   />
+                </label>
+               
+                <label className="sm:col-span-2">
+                  <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-zinc-500">
+                    Plan Type 
+                    </span>
+                  <select
+                    required
+                    value={checkoutForm.plantype}
+                    onChange={(e) =>
+                      updateCheckoutField("plantype", e.target.value)
+                    }
+                    className="h-14 w-full rounded-2xl border border-zinc-200 bg-white px-5 text-base font-bold text-zinc-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+                  >
+                    <option value="">Select</option>
+                    <option value="transformationPlan">transformationPlan</option>
+                    <option value="videoPlan">videoPlan</option>
+                  </select>
                 </label>
 
                 <label>
