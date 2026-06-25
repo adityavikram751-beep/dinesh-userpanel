@@ -320,7 +320,7 @@ export default function HomePage() {
           <div className="text-center">
             <h2 className="text-3xl font-black sm:text-5xl">About DineshSehgal</h2>
             <p className="mx-auto mt-6 max-w-5xl text-[17px] leading-9 text-[#666] sm:text-[20px]">
-            Hi, I'm Dinesh Sehgal, a Certified Fitness Coach dedicated to helping people achieve life-changing transformations through science-based training, proper nutrition, and consistent guidance.
+            Hi, I'm DINESH SEHGAL, a Certified Fitness Coach dedicated to helping people achieve life-changing transformations through science-based training, proper nutrition, and consistent guidance.
             </p>
             <Link
               href="/about"
