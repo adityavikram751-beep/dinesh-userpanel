@@ -1,6 +1,11 @@
 "use client";
 
 import { type FormEvent, useEffect, useState } from "react";
+import {
+  createPlanPurchase,
+  getPlanCurrencyOptions,
+  initiatePlanPayment,
+} from "./checkout-api";
 
 // ================= TYPES =================
 
@@ -26,7 +31,7 @@ type GymPlan = {
 type CheckoutStep = "form" | "payment" | "success";
 
 type CheckoutForm = {
-  country: string;
+  currencyCode: string;
   name: string;
   age: string;
   sex: string;
@@ -43,7 +48,7 @@ const WHATSAPP_NUMBER = "918585986111";
 const UPI_ID = "dineshsehgal@upi";
 
 const defaultCheckoutForm: CheckoutForm = {
-  country: "India",
+  currencyCode: "INR",
   name: "",
   age: "",
   sex: "",
@@ -53,8 +58,6 @@ const defaultCheckoutForm: CheckoutForm = {
   pastInjury: "",
   goal: "",
 };
-
-const countryOptions = ["India", "United States", "United Kingdom", "Canada"];
 
 const premiumAudience = [
   {
@@ -78,19 +81,6 @@ const premiumAudience = [
 ];
 
 // ================= HELPERS =================
-
-function countryToCurrency(country: string): string {
-  switch (country) {
-    case "United States":
-      return "USD";
-    case "United Kingdom":
-      return "GBP";
-    case "Canada":
-      return "CAD";
-    default:
-      return "INR";
-  }
-}
 
 function getCurrencySymbol(currencyCode?: string): string {
   if (!currencyCode) return "₹";
@@ -130,10 +120,6 @@ function resolvePlanPrice(
     symbol: getCurrencySymbol(plan.currencyCode),
     currencyCode: plan.currencyCode ?? "INR",
   };
-}
-
-function getOrderId() {
-  return `DSF-${Date.now().toString().slice(-6)}`;
 }
 
 // ================= WHATSAPP HELPERS =================
@@ -338,34 +324,84 @@ export default function FitnessPlanPage() {
   const [checkoutForm, setCheckoutForm] =
     useState<CheckoutForm>(defaultCheckoutForm);
   const [orderId, setOrderId] = useState("");
+  const [paymentId, setPaymentId] = useState("");
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentCurrency, setPaymentCurrency] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [paymentSubmitting, setPaymentSubmitting] = useState(false);
 
   function openCheckout(plan: GymPlan) {
     setSelectedPlan(plan);
     setCheckoutStep("form");
     setCheckoutForm(defaultCheckoutForm);
     setOrderId("");
+    setPaymentId("");
+    setPaymentAmount("");
+    setPaymentCurrency("");
   }
 
   function closeCheckout() {
     setSelectedPlan(null);
     setCheckoutStep("form");
     setOrderId("");
+    setPaymentId("");
+    setPaymentAmount("");
+    setPaymentCurrency("");
   }
 
   function updateCheckoutField(field: keyof CheckoutForm, value: string) {
     setCheckoutForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  function proceedToPayment(event: FormEvent<HTMLFormElement>) {
+  async function proceedToPayment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setOrderId(getOrderId());
-    setCheckoutStep("payment");
+    if (!selectedPlan || !resolvedCheckoutPrice) return;
+
+    setSubmitting(true);
+    try {
+      const purchase = await createPlanPurchase({
+        course_id: selectedPlan._id,
+        full_name: checkoutForm.name,
+        age: Number(checkoutForm.age),
+        sex: checkoutForm.sex,
+        email: checkoutForm.email,
+        mobile_number: checkoutForm.mobile,
+        description: checkoutForm.description,
+        past_injury: checkoutForm.pastInjury,
+        goal: checkoutForm.goal,
+        currencyCode: checkoutForm.currencyCode,
+      });
+
+      setPaymentId(purchase.paymentId);
+      setOrderId(purchase.paymentId);
+      setPaymentAmount(purchase.amount ?? String(resolvedCheckoutPrice.price));
+      setPaymentCurrency(
+        purchase.currency ?? resolvedCheckoutPrice.currencyCode
+      );
+      setCheckoutStep("payment");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Something went wrong.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function confirmPaymentDone() {
+    setPaymentSubmitting(true);
+    try {
+      await initiatePlanPayment(paymentId);
+      setCheckoutStep("success");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Payment failed.");
+    } finally {
+      setPaymentSubmitting(false);
+    }
   }
 
   const resolvedCheckoutPrice = selectedPlan
     ? resolvePlanPrice(
         selectedPlan,
-        countryToCurrency(checkoutForm.country)
+        checkoutForm.currencyCode
       )
     : null;
 
@@ -562,16 +598,16 @@ export default function FitnessPlanPage() {
 
                 <label>
                   <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-zinc-500">
-                    Buying From
+                    Currency Code
                   </span>
                   <select
-                    value={checkoutForm.country}
-                    onChange={(e) => updateCheckoutField("country", e.target.value)}
+                    value={checkoutForm.currencyCode}
+                    onChange={(e) => updateCheckoutField("currencyCode", e.target.value)}
                     className="h-14 w-full rounded-2xl border border-zinc-200 bg-white px-5 text-base font-bold text-zinc-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
                   >
-                    {countryOptions.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
+                    {getPlanCurrencyOptions(selectedPlan).map((currencyCode) => (
+                      <option key={currencyCode} value={currencyCode}>
+                        {currencyCode}
                       </option>
                     ))}
                   </select>
@@ -703,9 +739,10 @@ export default function FitnessPlanPage() {
                 <div className="sm:col-span-2">
                   <button
                     type="submit"
-                    className="flex min-h-[58px] w-full items-center justify-center rounded-2xl bg-zinc-900 px-6 text-sm font-black uppercase tracking-[0.18em] text-white transition hover:bg-emerald-400 hover:text-black sm:w-auto"
+                    disabled={submitting}
+                    className="flex min-h-[58px] w-full items-center justify-center rounded-2xl bg-zinc-900 px-6 text-sm font-black uppercase tracking-[0.18em] text-white transition hover:bg-emerald-400 hover:text-black disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                   >
-                    Proceed to Payment
+                    {submitting ? "Creating Payment..." : "Proceed to Payment"}
                   </button>
                 </div>
               </form>
@@ -729,16 +766,20 @@ export default function FitnessPlanPage() {
                       <span className="text-zinc-950">{checkoutForm.name}</span>
                     </p>
                     <p>
-                      Country:{" "}
-                      <span className="text-zinc-950">{checkoutForm.country}</span>
+                      Currency:{" "}
+                      <span className="text-zinc-950">
+                        {paymentCurrency || resolvedCheckoutPrice.currencyCode}
+                      </span>
                     </p>
                     <p>
                       Amount:{" "}
                       <span className="text-zinc-950">
-                        {resolvedCheckoutPrice.symbol}
-                        {resolvedCheckoutPrice.price}{" "}
+                        {getCurrencySymbol(
+                          paymentCurrency || resolvedCheckoutPrice.currencyCode
+                        )}
+                        {paymentAmount || resolvedCheckoutPrice.price}{" "}
                         <span className="text-xs text-zinc-400">
-                          ({resolvedCheckoutPrice.currencyCode})
+                          ({paymentCurrency || resolvedCheckoutPrice.currencyCode})
                         </span>
                       </span>
                     </p>
@@ -760,10 +801,11 @@ export default function FitnessPlanPage() {
 
                   <button
                     type="button"
-                    onClick={() => setCheckoutStep("success")}
-                    className="mt-6 flex min-h-[56px] w-full items-center justify-center rounded-2xl bg-emerald-400 px-5 text-sm font-black uppercase tracking-[0.16em] text-black transition hover:bg-white"
+                    onClick={confirmPaymentDone}
+                    disabled={paymentSubmitting}
+                    className="mt-6 flex min-h-[56px] w-full items-center justify-center rounded-2xl bg-emerald-400 px-5 text-sm font-black uppercase tracking-[0.16em] text-black transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Payment Done
+                    {paymentSubmitting ? "Confirming..." : "Payment Done"}
                   </button>
 
                   <a

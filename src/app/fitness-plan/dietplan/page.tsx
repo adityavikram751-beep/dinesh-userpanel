@@ -1,6 +1,11 @@
 "use client";
 
 import { type FormEvent, useEffect, useState } from "react";
+import {
+  createPlanPurchase,
+  getPlanCurrencyOptions,
+  initiatePlanPayment,
+} from "../checkout-api";
 
 // ================= TYPES =================
 
@@ -26,10 +31,10 @@ type GymPlan = {
 type CheckoutStep = "form" | "payment" | "success";
 
 type CheckoutForm = {
-  country: string;
+  currencyCode: string;
   name: string;
   age: string;
-  gender: string;
+  sex: string;
   email: string;
   mobile: string;
   description: string;
@@ -41,13 +46,12 @@ type CheckoutForm = {
 
 const WHATSAPP_NUMBER = "918585986111";
 const UPI_ID = "dineshsehgal@upi";
-const API_BASE_URL = "https://dinesh-sagel-backend.onrender.com";
 
 const defaultCheckoutForm: CheckoutForm = {
-  country: "India",
+  currencyCode: "INR",
   name: "",
   age: "",
-  gender: "",
+  sex: "",
   email: "",
   mobile: "",
   description: "",
@@ -55,22 +59,7 @@ const defaultCheckoutForm: CheckoutForm = {
   goal: "",
 };
 
-const countryOptions = ["India", "United States", "United Kingdom", "Canada"];
-
 // ================= HELPERS =================
-
-function countryToCurrency(country: string): string {
-  switch (country) {
-    case "United States":
-      return "USD";
-    case "United Kingdom":
-      return "GBP";
-    case "Canada":
-      return "CAD";
-    default:
-      return "INR";
-  }
-}
 
 function getCurrencySymbol(currencyCode?: string): string {
   if (!currencyCode) return "₹";
@@ -110,10 +99,6 @@ function resolvePlanPrice(
     symbol: getCurrencySymbol(plan.currencyCode),
     currencyCode: plan.currencyCode ?? "INR",
   };
-}
-
-function getOrderId() {
-  return `DSF-${Date.now().toString().slice(-6)}`;
 }
 
 // ================= WHATSAPP HELPERS =================
@@ -185,7 +170,11 @@ export default function DietPlanPage() {
   const [checkoutForm, setCheckoutForm] =
     useState<CheckoutForm>(defaultCheckoutForm);
   const [orderId, setOrderId] = useState("");
+  const [paymentId, setPaymentId] = useState("");
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentCurrency, setPaymentCurrency] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [paymentSubmitting, setPaymentSubmitting] = useState(false);
   const [toast, setToast] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
@@ -234,12 +223,18 @@ export default function DietPlanPage() {
     setCheckoutStep("form");
     setCheckoutForm(defaultCheckoutForm);
     setOrderId("");
+    setPaymentId("");
+    setPaymentAmount("");
+    setPaymentCurrency("");
   }
 
   function closeCheckout() {
     setSelectedPlan(null);
     setCheckoutStep("form");
     setOrderId("");
+    setPaymentId("");
+    setPaymentAmount("");
+    setPaymentCurrency("");
   }
 
   function updateCheckoutField(field: keyof CheckoutForm, value: string) {
@@ -248,57 +243,65 @@ export default function DietPlanPage() {
 
   async function proceedToPayment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!selectedPlan) return;
     setSubmitting(true);
 
     try {
-      const token = localStorage.getItem("token");
-
       const resolvedPrice = resolvePlanPrice(
-        selectedPlan!,
-        countryToCurrency(checkoutForm.country)
+        selectedPlan,
+        checkoutForm.currencyCode
       );
 
       const payload = {
-        course_id: selectedPlan!._id,
+        course_id: selectedPlan._id,
         full_name: checkoutForm.name,
         age: parseInt(checkoutForm.age),
-        gender: checkoutForm.gender,
+        sex: checkoutForm.sex,
         email: checkoutForm.email,
         mobile_number: checkoutForm.mobile,
         description: checkoutForm.description,
         past_injury: checkoutForm.pastInjury,
         goal: checkoutForm.goal,
-        currencyCode: resolvedPrice.currencyCode,
+        currencyCode: checkoutForm.currencyCode,
       };
 
-      const response = await fetch(`${API_BASE_URL}/api/purchase/plan`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Something went wrong");
-      }
-
-      setOrderId(getOrderId());
+      const purchase = await createPlanPurchase(payload);
+      setPaymentId(purchase.paymentId);
+      setOrderId(purchase.paymentId);
+      setPaymentAmount(purchase.amount ?? String(resolvedPrice.price));
+      setPaymentCurrency(purchase.currency ?? resolvedPrice.currencyCode);
       setCheckoutStep("payment");
-      showToast("✅ Plan booked successfully!");
-    } catch (error: any) {
-      console.error("❌ Payment error:", error);
-      showToast(error.message || "❌ Something went wrong. Please try again.");
+      showToast("Payment id created successfully!");
+    } catch (error: unknown) {
+      console.error("Payment error:", error);
+      showToast(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again."
+      );
     } finally {
       setSubmitting(false);
     }
   }
 
+  async function confirmPaymentDone() {
+    setPaymentSubmitting(true);
+    try {
+      await initiatePlanPayment(paymentId);
+      setCheckoutStep("success");
+      showToast("Payment initiated successfully!");
+    } catch (error: unknown) {
+      console.error("Payment initiate error:", error);
+      showToast(
+        error instanceof Error ? error.message : "Payment failed. Please try again."
+      );
+    } finally {
+      setPaymentSubmitting(false);
+    }
+  }
+
   const resolvedCheckoutPrice = selectedPlan
-    ? resolvePlanPrice(selectedPlan, countryToCurrency(checkoutForm.country))
+    ? resolvePlanPrice(selectedPlan, checkoutForm.currencyCode)
     : null;
 
   const mainPlan = plans.length > 0 ? plans[0] : null;
@@ -596,16 +599,16 @@ export default function DietPlanPage() {
 
                 <label>
                   <span className="mb-1 block text-[10px] sm:text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
-                    Buying From
+                    Currency Code
                   </span>
                   <select
-                    value={checkoutForm.country}
-                    onChange={(e) => updateCheckoutField("country", e.target.value)}
+                    value={checkoutForm.currencyCode}
+                    onChange={(e) => updateCheckoutField("currencyCode", e.target.value)}
                     className="h-10 sm:h-12 w-full rounded-lg sm:rounded-xl border border-slate-200 bg-white px-3 sm:px-4 text-xs sm:text-sm font-semibold text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
                   >
-                    {countryOptions.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
+                    {getPlanCurrencyOptions(selectedPlan).map((currencyCode) => (
+                      <option key={currencyCode} value={currencyCode}>
+                        {currencyCode}
                       </option>
                     ))}
                   </select>
@@ -654,12 +657,12 @@ export default function DietPlanPage() {
 
                 <label>
                   <span className="mb-1 block text-[10px] sm:text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
-                    Gender
+                    Sex
                   </span>
                   <select
                     required
-                    value={checkoutForm.gender}
-                    onChange={(e) => updateCheckoutField("gender", e.target.value)}
+                    value={checkoutForm.sex}
+                    onChange={(e) => updateCheckoutField("sex", e.target.value)}
                     className="h-10 sm:h-12 w-full rounded-lg sm:rounded-xl border border-slate-200 bg-white px-3 sm:px-4 text-xs sm:text-sm font-medium text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
                   >
                     <option value="">Select</option>
@@ -766,15 +769,20 @@ export default function DietPlanPage() {
                       Buyer: <span className="text-slate-900">{checkoutForm.name}</span>
                     </p>
                     <p>
-                      Country: <span className="text-slate-900">{checkoutForm.country}</span>
+                      Currency:{" "}
+                      <span className="text-slate-900">
+                        {paymentCurrency || resolvedCheckoutPrice.currencyCode}
+                      </span>
                     </p>
                     <p>
                       Amount:{" "}
                       <span className="text-slate-900">
-                        {resolvedCheckoutPrice.symbol}
-                        {resolvedCheckoutPrice.price}{" "}
+                        {getCurrencySymbol(
+                          paymentCurrency || resolvedCheckoutPrice.currencyCode
+                        )}
+                        {paymentAmount || resolvedCheckoutPrice.price}{" "}
                         <span className="text-[10px] sm:text-xs text-slate-500">
-                          ({resolvedCheckoutPrice.currencyCode})
+                          ({paymentCurrency || resolvedCheckoutPrice.currencyCode})
                         </span>
                       </span>
                     </p>
@@ -796,10 +804,11 @@ export default function DietPlanPage() {
 
                   <button
                     type="button"
-                    onClick={() => setCheckoutStep("success")}
-                    className="mt-4 sm:mt-5 flex min-h-[44px] sm:min-h-[50px] w-full items-center justify-center rounded-lg sm:rounded-xl bg-emerald-400 px-4 sm:px-5 text-xs sm:text-sm font-semibold text-black transition hover:bg-white"
+                    onClick={confirmPaymentDone}
+                    disabled={paymentSubmitting}
+                    className="mt-4 sm:mt-5 flex min-h-[44px] sm:min-h-[50px] w-full items-center justify-center rounded-lg sm:rounded-xl bg-emerald-400 px-4 sm:px-5 text-xs sm:text-sm font-semibold text-black transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Payment Done
+                    {paymentSubmitting ? "Confirming..." : "Payment Done"}
                   </button>
 
                   <a
