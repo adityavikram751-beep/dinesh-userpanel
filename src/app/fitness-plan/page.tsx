@@ -214,7 +214,7 @@ function PlanCard({
 
       {/* "Most Popular" – top right */}
       {isPopular && (
-        <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500 px-3.5 py-1.5 text-[8px] font-black uppercase tracking-[0.15em] text-black shadow-lg shadow-emerald-500/50">
+        <div className="absolute right-3 top-1 z-10 flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500 px-3.5 py-1.5 text-[8px] font-black uppercase tracking-[0.15em] text-black shadow-lg shadow-emerald-500/50">
           <span>⭐</span> Most Popular
         </div>
       )}
