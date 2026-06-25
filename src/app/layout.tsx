@@ -1,6 +1,7 @@
 // src/app/layout.tsx
 
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 
 import { AuthProvider } from "../app/auth-context";
@@ -21,6 +22,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        {/* Razorpay Checkout Script */}
+        <Script
+          src="https://checkout.razorpay.com/v1/checkout.js"
+          strategy="beforeInteractive"
+        />
+
         <AuthProvider>
           <Header />
 

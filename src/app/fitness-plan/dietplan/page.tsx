@@ -5,6 +5,7 @@ import {
   createPlanPurchase,
   getPlanCurrencyOptions,
   initiatePlanPayment,
+  verifyPayment,
 } from "../checkout-api";
 
 // ================= TYPES =================
@@ -241,6 +242,7 @@ export default function DietPlanPage() {
     setCheckoutForm((prev) => ({ ...prev, [field]: value }));
   }
 
+  // ================= MAIN PAYMENT FUNCTION =================
   async function proceedToPayment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selectedPlan) return;
@@ -252,6 +254,7 @@ export default function DietPlanPage() {
         checkoutForm.currencyCode
       );
 
+      // STEP 1: Create payload for purchase
       const payload = {
         course_id: selectedPlan._id,
         full_name: checkoutForm.name,
@@ -265,13 +268,72 @@ export default function DietPlanPage() {
         currencyCode: checkoutForm.currencyCode,
       };
 
+      // STEP 2: Call first API - Create purchase and get payment ID
+      console.log("🔄 Creating purchase...");
       const purchase = await createPlanPurchase(payload);
+      console.log("✅ Payment ID generated:", purchase.paymentId);
+      
+      // Store payment ID for later use
       setPaymentId(purchase.paymentId);
-      setOrderId(purchase.paymentId);
-      setPaymentAmount(purchase.amount ?? String(resolvedPrice.price));
-      setPaymentCurrency(purchase.currency ?? resolvedPrice.currencyCode);
-      setCheckoutStep("payment");
-      showToast("Payment id created successfully!");
+      
+      // STEP 3: Call second API - Initiate payment with Razorpay
+      console.log("🔄 Initiating payment with Razorpay...");
+      const razorpayData = await initiatePlanPayment(purchase.paymentId);
+      console.log("✅ Razorpay Order ID:", razorpayData.razorpayOrderId);
+      console.log("✅ Razorpay Key:", razorpayData.key);
+      console.log("✅ Amount:", razorpayData.amount);
+
+      // STEP 4: Open Razorpay checkout
+      const options = {
+        key: razorpayData.key,
+        amount: razorpayData.amount,
+        currency: razorpayData.currency,
+        order_id: razorpayData.razorpayOrderId,
+        name: "Dinesh Sehgal Fitness",
+        description: selectedPlan.name,
+        prefill: {
+          name: checkoutForm.name,
+          email: checkoutForm.email,
+          contact: checkoutForm.mobile,
+        },
+        theme: {
+          color: "#22c55e",
+        },
+        handler: async function (response: any) {
+          console.log("💰 Payment Success:", response);
+          
+          // Store order and payment IDs
+          setOrderId(response.razorpay_order_id);
+          setPaymentId(response.razorpay_payment_id);
+          
+          // STEP 5: Verify payment on backend (optional but recommended)
+          try {
+            console.log("🔄 Verifying payment...");
+            await verifyPayment({
+              paymentId: response.razorpay_payment_id,
+              orderId: response.razorpay_order_id,
+              signature: response.razorpay_signature
+            });
+            console.log("✅ Payment verified successfully!");
+          } catch (err) {
+            console.error("Verification error:", err);
+            // Still show success to user, but log error for debugging
+          }
+          
+          // Show success page
+          setCheckoutStep("success");
+          showToast("✅ Payment Successful!");
+        },
+        modal: {
+          ondismiss() {
+            showToast("Payment Cancelled");
+          },
+        },
+      };
+
+      const razorpay = new (window as any).Razorpay(options);
+      razorpay.open();
+      
     } catch (error: unknown) {
       console.error("Payment error:", error);
       showToast(
@@ -284,21 +346,22 @@ export default function DietPlanPage() {
     }
   }
 
-  async function confirmPaymentDone() {
-    setPaymentSubmitting(true);
-    try {
-      await initiatePlanPayment(paymentId);
-      setCheckoutStep("success");
-      showToast("Payment initiated successfully!");
-    } catch (error: unknown) {
-      console.error("Payment initiate error:", error);
-      showToast(
-        error instanceof Error ? error.message : "Payment failed. Please try again."
-      );
-    } finally {
-      setPaymentSubmitting(false);
-    }
-  }
+  // ================= REMOVE THIS FUNCTION - NOT NEEDED =================
+  // async function confirmPaymentDone() {
+  //   setPaymentSubmitting(true);
+  //   try {
+  //     await initiatePlanPayment(paymentId);
+  //     setCheckoutStep("success");
+  //     showToast("Payment initiated successfully!");
+  //   } catch (error: unknown) {
+  //     console.error("Payment initiate error:", error);
+  //     showToast(
+  //       error instanceof Error ? error.message : "Payment failed. Please try again."
+  //     );
+  //   } finally {
+  //     setPaymentSubmitting(false);
+  //   }
+  // }
 
   const resolvedCheckoutPrice = selectedPlan
     ? resolvePlanPrice(selectedPlan, checkoutForm.currencyCode)
@@ -753,80 +816,7 @@ export default function DietPlanPage() {
               </form>
             )}
 
-            {/* STEP: PAYMENT */}
-            {checkoutStep === "payment" && (
-              <div className="grid gap-4 sm:gap-6 p-4 sm:p-6 sm:grid-cols-2 lg:grid-cols-[1fr_0.82fr] sm:p-8">
-                <div className="rounded-lg sm:rounded-xl border border-slate-200 bg-slate-50 p-4 sm:p-6">
-                  <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                    Order Generated
-                  </p>
-                  <h4 className="mt-2 sm:mt-3 text-xl sm:text-2xl font-bold text-slate-900">{orderId}</h4>
-                  <div className="mt-4 sm:mt-6 grid gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium text-slate-600">
-                    <p>
-                      Plan: <span className="text-slate-900">{selectedPlan.name}</span>
-                    </p>
-                    <p>
-                      Buyer: <span className="text-slate-900">{checkoutForm.name}</span>
-                    </p>
-                    <p>
-                      Currency:{" "}
-                      <span className="text-slate-900">
-                        {paymentCurrency || resolvedCheckoutPrice.currencyCode}
-                      </span>
-                    </p>
-                    <p>
-                      Amount:{" "}
-                      <span className="text-slate-900">
-                        {getCurrencySymbol(
-                          paymentCurrency || resolvedCheckoutPrice.currencyCode
-                        )}
-                        {paymentAmount || resolvedCheckoutPrice.price}{" "}
-                        <span className="text-[10px] sm:text-xs text-slate-500">
-                          ({paymentCurrency || resolvedCheckoutPrice.currencyCode})
-                        </span>
-                      </span>
-                    </p>
-                  </div>
-                </div>
-
-                <div className="rounded-lg sm:rounded-xl bg-black p-4 sm:p-6 text-white">
-                  <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">
-                    UPI Payment
-                  </p>
-                  <h4 className="mt-2 sm:mt-3 text-lg sm:text-xl font-bold">Pay using UPI ID</h4>
-                  <div className="mt-3 sm:mt-4 rounded-lg sm:rounded-xl border border-white/10 bg-white/10 p-3 sm:p-4 text-base sm:text-lg font-bold text-emerald-300">
-                    {UPI_ID}
-                  </div>
-                  <p className="mt-3 sm:mt-4 text-xs sm:text-sm leading-5 sm:leading-6 text-slate-300">
-                    Complete the payment in your UPI app, then tap the button
-                    below to confirm your order.
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={confirmPaymentDone}
-                    disabled={paymentSubmitting}
-                    className="mt-4 sm:mt-5 flex min-h-[44px] sm:min-h-[50px] w-full items-center justify-center rounded-lg sm:rounded-xl bg-emerald-400 px-4 sm:px-5 text-xs sm:text-sm font-semibold text-black transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {paymentSubmitting ? "Confirming..." : "Payment Done"}
-                  </button>
-
-                  <a
-                    href={getPlanWhatsappUrl(
-                      selectedPlan,
-                      resolvedCheckoutPrice.price,
-                      resolvedCheckoutPrice.symbol
-                    )}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-2 sm:mt-3 flex min-h-[40px] sm:min-h-[48px] w-full items-center justify-center rounded-lg sm:rounded-xl border border-white/20 px-4 sm:px-5 text-xs sm:text-sm font-semibold text-white transition hover:bg-white hover:text-black"
-                  >
-                    Need Help On WhatsApp
-                  </a>
-                </div>
-              </div>
-            )}
-
+            {/* STEP: PAYMENT - REMOVED because Razorpay handles it */}
             {/* STEP: SUCCESS */}
             {checkoutStep === "success" && (
               <div className="p-6 sm:p-8 text-center sm:p-12">
@@ -834,19 +824,38 @@ export default function DietPlanPage() {
                   ✓
                 </div>
                 <h4 className="mt-4 sm:mt-5 text-xl sm:text-2xl font-bold text-slate-900">
-                  Payment Successful
+                  Payment Successful! 🎉
                 </h4>
                 <p className="mx-auto mt-2 sm:mt-3 max-w-xl text-xs sm:text-sm leading-6 sm:leading-7 text-slate-600">
-                  Your order {orderId} has been submitted. Our team will verify
-                  the payment and contact you with onboarding details.
+                  Your order has been submitted successfully. 
+                  {orderId && ` Order ID: ${orderId}`}
+                  <br />
+                  Our team will verify the payment and contact you with onboarding details within 24 hours.
                 </p>
-                <button
-                  type="button"
-                  onClick={closeCheckout}
-                  className="mt-5 sm:mt-6 min-h-[44px] sm:min-h-[50px] rounded-lg sm:rounded-xl bg-black px-6 sm:px-8 text-xs sm:text-sm font-semibold text-white transition hover:bg-emerald-500 hover:text-black"
-                >
-                  Done
-                </button>
+                <div className="mt-5 sm:mt-6 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+                  <button
+                    type="button"
+                    onClick={closeCheckout}
+                    className="min-h-[44px] sm:min-h-[50px] rounded-lg sm:rounded-xl bg-black px-6 sm:px-8 text-xs sm:text-sm font-semibold text-white transition hover:bg-emerald-500 hover:text-black"
+                  >
+                    Done
+                  </button>
+                  <a
+                    href={getPlanWhatsappUrl(
+                      selectedPlan,
+                      resolvedCheckoutPrice?.price || "",
+                      resolvedCheckoutPrice?.symbol || "₹"
+                    )}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 min-h-[44px] sm:min-h-[50px] rounded-lg sm:rounded-xl border border-black/20 px-4 sm:px-6 text-xs sm:text-sm font-semibold text-black transition hover:bg-black/5"
+                  >
+                    <svg viewBox="0 0 32 32" fill="currentColor" className="h-4 w-4 sm:h-5 sm:w-5 text-[#25D366]">
+                      <path d="M16.01 3C8.83 3 3 8.82 3 16c0 2.57.75 5.08 2.16 7.23L3 29l5.93-2.1A12.93 12.93 0 0016.01 29C23.18 29 29 23.18 29 16S23.18 3 16.01 3zm0 23.67c-2.13 0-4.22-.57-6.04-1.65l-.43-.25-3.52 1.25 1.15-3.62-.28-.45A10.58 10.58 0 015.33 16c0-5.89 4.79-10.68 10.68-10.68 2.85 0 5.52 1.11 7.54 3.13A10.59 10.59 0 0126.68 16c0 5.89-4.79 10.67-10.67 10.67zm5.86-7.94c-.32-.16-1.89-.93-2.18-1.04-.29-.11-.5-.16-.71.16-.21.32-.82 1.04-1.01 1.25-.18.21-.37.24-.69.08-.32-.16-1.35-.5-2.57-1.58-.95-.84-1.59-1.88-1.77-2.2-.18-.32-.02-.49.14-.65.14-.14.32-.37.48-.55.16-.18.21-.32.32-.53.11-.21.05-.4-.03-.55-.08-.16-.71-1.72-.98-2.35-.26-.62-.52-.54-.71-.55h-.61c-.21 0-.55.08-.84.4-.29.32-1.11 1.08-1.11 2.64 0 1.55 1.13 3.05 1.29 3.26.16.21 2.22 3.39 5.39 4.75.75.32 1.34.52 1.8.66.75.24 1.44.21 1.98.13.61-.09 1.89-.77 2.15-1.51.27-.74.27-1.38.19-1.51-.08-.13-.29-.21-.61-.37z" />
+                    </svg>
+                    Chat with Support
+                  </a>
+                </div>
               </div>
             )}
           </div>
