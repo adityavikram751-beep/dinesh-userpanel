@@ -99,7 +99,7 @@ export default function Footer() {
 >
   <div className="relative overflow-hidden rounded-xl border border-white/20 shadow-xl shadow-black/20 group">
     <img
-      src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=800&auto=format&fit=crop"
+      src="/footer 1.jpeg"
       alt="fitness"
       className="h-[180px] sm:h-[220px] lg:h-[280px] w-full object-cover transition-transform duration-700 group-hover:scale-105"
     />
@@ -117,7 +117,7 @@ export default function Footer() {
 >
   <div className="relative overflow-hidden rounded-xl border border-white/20 shadow-xl shadow-black/20 group">
     <img
-      src="https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=800&auto=format&fit=crop"
+      src="/footer 2.jpeg"
       alt="coach"
       className="h-[180px] sm:h-[220px] lg:h-[280px] w-full object-cover transition-transform duration-700 group-hover:scale-105"
     />

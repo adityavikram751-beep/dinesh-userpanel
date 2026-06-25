@@ -453,7 +453,7 @@ export default function ConsultationPage() {
           {/* RIGHT */}
           <div className="relative">
             <img
-              src="https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=1400&auto=format&fit=crop"
+              src="/POASTER.jpeg"
               alt="consultation"
               className="h-[380px] w-full rounded-[40px] object-cover shadow-[0_30px_100px_rgba(0,0,0,0.4)] sm:h-[520px] lg:h-[700px]"
             />

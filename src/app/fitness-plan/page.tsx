@@ -563,7 +563,7 @@ export default function FitnessPlanPage() {
           {/* RIGHT */}
           <div className="relative">
             <img
-              src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1200&auto=format&fit=crop"
+              src="/footer 2.jpeg"
               alt="athlete"
               className="h-[320px] w-full rounded-[36px] object-cover shadow-2xl shadow-emerald-500/10 transition duration-500 hover:scale-[1.02] sm:h-[520px] lg:h-[700px]"
             />

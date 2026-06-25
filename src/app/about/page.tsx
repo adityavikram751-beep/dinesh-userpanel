@@ -131,7 +131,7 @@ export default function AboutPage() {
 
             <div className="space-y-4">
               <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-                Hi, I'm <span className="text-emerald-300 font-semibold">Dinesh Sehgal</span>, a Certified Fitness Coach dedicated to helping people achieve life-changing transformations through science-based training, proper nutrition, and consistent guidance.
+                Hi, I'm <span className="text-emerald-300 font-semibold">DINESH SEHGAL</span>, a Certified Fitness Coach dedicated to helping people achieve life-changing transformations through science-based training, proper nutrition, and consistent guidance.
               </p>
 
               <p className="text-sm sm:text-base text-slate-300 leading-relaxed">

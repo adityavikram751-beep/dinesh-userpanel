@@ -432,7 +432,7 @@ export default function HomePage() {
               </div>
             </div>
             <div className="overflow-hidden rounded-[34px] shadow-2xl">
-              <img src="https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=1600&auto=format&fit=crop" alt="" className="h-full w-full object-cover" />
+              <img src="/hoome.jpeg" alt="" className="h-full w-full object-cover" />
             </div>
           </div>
         </div>
