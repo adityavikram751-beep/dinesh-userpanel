@@ -19,7 +19,8 @@ type PriceEntry = {
 
 type VideoPlan = {
   _id: string;
-  title: string;
+  title?: string;        // optional
+  name?: string;         // added – API se 'name' aa raha hai
   price?: number | string;
   currencyCode?: string;
   allprice?: PriceEntry[];
@@ -79,6 +80,11 @@ function getCurrencySymbol(currencyCode?: string): string {
   }
 }
 
+// Helper to get plan display name (fallback)
+function getPlanDisplayName(plan: VideoPlan): string {
+  return plan.name || plan.title || "Plan";
+}
+
 function resolvePlanPrice(
   plan: VideoPlan,
   preferredCurrency: string = "INR"
@@ -130,12 +136,14 @@ function getPlanWhatsappUrl(
         .join("\n")
     : "";
 
+  const planName = getPlanDisplayName(plan);
+
   const message = `Hi DineshSehgal! 👋
 
 I want this consultation plan.
 
 📹 Plan Name:
-${plan.title}
+${planName}
 
 💰 Price:
 ${symbol}${price}
@@ -314,7 +322,7 @@ export default function ConsultationPage() {
         currency: razorpayData.currency,
         order_id: razorpayData.razorpayOrderId,
         name: "Dinesh Sehgal Fitness",
-        description: selectedPlan.title,
+        description: getPlanDisplayName(selectedPlan),  // updated
         prefill: {
           name: checkoutForm.name,
           email: checkoutForm.email,
@@ -551,7 +559,7 @@ export default function ConsultationPage() {
                       <div className="flex flex-col gap-4">
                         <div>
                           <p className="text-2xl sm:text-3xl font-black uppercase tracking-wider text-white">
-                            {plan.title}
+                            {getPlanDisplayName(plan)}   {/* updated */}
                           </p>
 
                           <div className="mt-3 flex items-baseline gap-3">
@@ -618,7 +626,7 @@ export default function ConsultationPage() {
                   Secure Checkout
                 </p>
                 <h3 className="mt-3 text-2xl font-black sm:text-3xl">
-                  {selectedPlan.title}
+                  {getPlanDisplayName(selectedPlan)}   {/* updated */}
                 </h3>
                 <p className="mt-2 text-sm text-zinc-300">
                   {resolvedCheckoutPrice.symbol}
@@ -646,7 +654,7 @@ export default function ConsultationPage() {
                     Plan Name
                   </span>
                   <input
-                    value={selectedPlan.title}
+                    value={getPlanDisplayName(selectedPlan)}   // updated
                     readOnly
                     className="h-14 w-full rounded-2xl border border-zinc-200 bg-zinc-100 px-5 text-base font-black text-zinc-950 outline-none"
                   />
