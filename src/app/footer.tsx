@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useRef } from "react";
+import Link from "next/link";   // ✅ Link import
 
 const baseUrl = "https://dinesh-sagel-backend.onrender.com";
 
@@ -92,38 +93,38 @@ export default function Footer() {
 
       <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-3 pt-8">
 
-      {/* LEFT IMAGE */}
-<div
-  className={`flex flex-col ${base} ${visible ? show : hidden}`}
-  style={{ transitionDelay: "0ms" }}
->
-  <div className="relative overflow-hidden rounded-xl border border-white/20 shadow-xl shadow-black/20 group">
-    <img
-      src="/footer 1.jpeg"
-      alt="fitness"
-      className="h-[180px] sm:h-[220px] lg:h-[280px] w-full object-cover transition-transform duration-700 group-hover:scale-105"
-    />
-    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-  </div>
-  <p className="mt-auto pt-3 text-sm font-bold text-white/90">
-    &quot;Ready To Lose Fat, DineshSehgal Me&quot;
-  </p>
-</div>
+        {/* LEFT IMAGE */}
+        <div
+          className={`flex flex-col ${base} ${visible ? show : hidden}`}
+          style={{ transitionDelay: "0ms" }}
+        >
+          <div className="relative overflow-hidden rounded-xl border border-white/20 shadow-xl shadow-black/20 group">
+            <img
+              src="/footer 1.jpeg"
+              alt="fitness"
+              className="h-[180px] sm:h-[220px] lg:h-[280px] w-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          </div>
+          <p className="mt-auto pt-3 text-sm font-bold text-white/90">
+            &quot;Ready To Lose Fat, DineshSehgal Me&quot;
+          </p>
+        </div>
 
-{/* CENTER IMAGE */}
-<div
-  className={`${base} ${visible ? show : hidden}`}
-  style={{ transitionDelay: "150ms" }}
->
-  <div className="relative overflow-hidden rounded-xl border border-white/20 shadow-xl shadow-black/20 group">
-    <img
-      src="/footer 2.jpeg"
-      alt="coach"
-      className="h-[180px] sm:h-[220px] lg:h-[280px] w-full object-cover transition-transform duration-700 group-hover:scale-105"
-    />
-    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-  </div>
-</div>
+        {/* CENTER IMAGE */}
+        <div
+          className={`${base} ${visible ? show : hidden}`}
+          style={{ transitionDelay: "150ms" }}
+        >
+          <div className="relative overflow-hidden rounded-xl border border-white/20 shadow-xl shadow-black/20 group">
+            <img
+              src="/footer 2.jpeg"
+              alt="coach"
+              className="h-[180px] sm:h-[220px] lg:h-[280px] w-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          </div>
+        </div>
 
         {/* RIGHT — FORM CARD */}
         <div
@@ -254,10 +255,25 @@ export default function Footer() {
 
       </div>
 
-      {/* Bottom Line */}
+      {/* ========== BOTTOM BAR – Privacy & Terms ========== */}
       <div className="relative mt-10">
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+        
+        <div className="relative pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-white/70">
+          <span className="font-medium">
+            © {new Date().getFullYear()} Dinesh Sehgal Fitness. All rights reserved.
+          </span>
+          <div className="flex items-center gap-6">
+            <Link href="/privacyandpolicy" className="hover:text-white transition-colors duration-200 border-b border-transparent hover:border-white/30 pb-0.5">
+              Privacy Policy
+            </Link>
+            <Link href="/termandcondition" className="hover:text-white transition-colors duration-200 border-b border-transparent hover:border-white/30 pb-0.5">
+              Terms &amp; Conditions
+            </Link>
+          </div>
+        </div>
       </div>
+
     </footer>
   );
 }
