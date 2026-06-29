@@ -35,7 +35,7 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_BASE_URL = "https://dinesh-sagel-backend.onrender.com";
+const API_BASE_URL = "https://api.dineshsehgal.com";
 const CURRENT_USER_KEY = "fitness-current-user";
 export const PASSWORD_RULE_MESSAGE = "Password first letter capital ho, aur _ @ number include hona chahiye.";
 

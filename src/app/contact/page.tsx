@@ -11,7 +11,7 @@ type ContactData = {
 type IconName = "mail" | "phone";
 
 const WHATSAPP_NUMBER = "918585986111";
-const BASE_URL = "https://dinesh-sagel-backend.onrender.com";
+const BASE_URL = "https://api.dineshsehgal.com";
 
 const defaultContactData: ContactData = {
   email: "info@dineshsehgal.com",

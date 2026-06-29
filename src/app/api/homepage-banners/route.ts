@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 
 const HOME_BANNERS_API =
-  "https://dinesh-sagel-backend.onrender.com/api/banners?bannerfor=home";
+  "https://api.dineshsehgal.com/api/banners?bannerfor=home";
 
 const TRANSFORMATION_BANNERS_API =
-  "https://dinesh-sagel-backend.onrender.com/api/banners?bannerfor=transformation";
+  "https://api.dineshsehgal.com/api/banners?bannerfor=transformation";
 
 type BannerPayload = unknown[] | { value?: unknown[] };
 

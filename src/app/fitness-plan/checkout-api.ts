@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://dinesh-sagel-backend.onrender.com";
+const API_BASE_URL = "https://api.dineshsehgal.com";
 const CURRENT_USER_KEY = "fitness-current-user";
 
 type PurchasePayload = {

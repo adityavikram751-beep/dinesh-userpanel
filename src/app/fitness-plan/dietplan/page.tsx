@@ -191,7 +191,7 @@ export default function DietPlanPage() {
     async function loadPlans() {
       try {
         const response = await fetch(
-          "https://dinesh-sagel-backend.onrender.com/api/plans/plans?category=diet"
+          "https://api.dineshsehgal.com/api/plans/plans?category=diet"
         );
         const data = await response.json();
 

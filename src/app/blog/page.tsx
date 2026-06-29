@@ -45,7 +45,7 @@ export default function BlogPage() {
 
   useEffect(() => {
     fetch(
-      "https://dinesh-sagel-backend.onrender.com/api/blogs/blogs"
+      "https://api.dineshsehgal.com/api/blogs/blogs"
     )
       .then((res) => res.json())
       .then((data: BlogApiResponse) => {

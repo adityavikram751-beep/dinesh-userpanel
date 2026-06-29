@@ -218,7 +218,7 @@ export default function ConsultationPage() {
     async function loadPlans() {
       try {
         const res = await fetch(
-          `https://dinesh-sagel-backend.onrender.com/api/video-plans`
+          `https://api.dineshsehgal.com/api/video-plans`
         );
         const data = await res.json();
 

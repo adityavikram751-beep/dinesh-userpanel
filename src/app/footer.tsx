@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, useRef } from "react";
 import Link from "next/link";   // ✅ Link import
 
-const baseUrl = "https://dinesh-sagel-backend.onrender.com";
+const baseUrl = "https://api.dineshsehgal.com";
 
 export default function Footer() {
   const [num1, setNum1] = useState(0);

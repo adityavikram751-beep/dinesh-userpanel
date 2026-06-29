@@ -478,7 +478,7 @@ export default function FitnessPlanPage() {
     async function loadPlans() {
       try {
         const response = await fetch(
-          "https://dinesh-sagel-backend.onrender.com/api/plans/plans?category=transformation"
+          "https://api.dineshsehgal.com/api/plans/plans?category=transformation"
         );
         const data = await response.json();
 

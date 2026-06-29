@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 const BANNERS_API = "/api/homepage-banners";
-const API_ORIGIN = "https://dinesh-sagel-backend.onrender.com";
+const API_ORIGIN = "https://api.dineshsehgal.com";
 const WHATSAPP_NUMBER = "8585986111";
 
 function getWhatsappUrl(plan?: string) {
