@@ -23,17 +23,17 @@ const defaultHeroBanner = {
 const defaultTransformations = [
   {
     image: "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?q=80&w=1200&auto=format&fit=crop",
-    name: "Rahul Sharma",
+    name: "Weight Loss Success Story",
     result: "-18 KG Fat Loss",
-    desc: "Incredible body transformation through customized workout, nutrition and expert coaching.",
-    duration: "12 WEEKS",
+    desc: "An inspiring transformation achieved through personalized coaching, strength training, and a calorie-controlled nutrition plan. The client successfully reduced excess body fat while improving overall health, confidence, and physical performance.",
+    duration: "4 MONTHS",
   },
   {
     image: "https://images.unsplash.com/photo-1534367507873-d2d7e24c797f?q=80&w=1200&auto=format&fit=crop",
-    name: "Aman Verma",
-    result: "Muscle Gain Journey",
-    desc: "Incredible body transformation through customized workout, nutrition and expert coaching.",
-    duration: "12 WEEKS",
+    name: "3 Month Body Transformation",
+    result: "12 Week Transformation",
+    desc: "From gaining strength to improving overall fitness, this incredible 3-month transformation shows what consistency, proper nutrition, and a personalized workout plan can achieve. With regular training and expert guidance, the client reduced body fat, increased lean muscle, and built healthier lifestyle habits.",
+    duration: "3 MONTHS",
   },
   {
     image: "https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=1200&auto=format&fit=crop",
@@ -147,6 +147,7 @@ const servicePlans = [
   },
 ];
 
+// ================= TRANSFORMATIONS SECTION =================
 function TransformationsSection({ transformations }: { transformations: Transformation[] }) {
   return (
     <section className="bg-gradient-to-b from-[#fffaf5] to-[#f8f7ff] py-20 sm:py-28">
@@ -161,9 +162,17 @@ function TransformationsSection({ transformations }: { transformations: Transfor
 
         <div className="mt-16 grid gap-8 md:grid-cols-2 xl:grid-cols-4">
           {transformations.map((item, index) => (
-            <div key={`${item.name}-${index}`} className="group overflow-hidden rounded-[32px] border border-[#eee] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.06)] transition-all duration-500 hover:-translate-y-3 hover:border-[#ff8c42]/30 hover:shadow-[0_20px_70px_rgba(255,140,66,0.18)]">
-              <div className="relative aspect-[4/5] overflow-hidden bg-[#111] sm:aspect-[3/4]">
-                <img src={item.image} alt="" className="h-full w-full object-contain object-center transition duration-700 group-hover:scale-105" />
+            <div
+              key={`${item.name}-${index}`}
+              className="group flex flex-col overflow-hidden rounded-[32px] border border-[#eee] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.06)] transition-all duration-500 hover:-translate-y-3 hover:border-[#ff8c42]/30 hover:shadow-[0_20px_70px_rgba(255,140,66,0.18)]"
+            >
+              {/* Image — fixed aspect ratio */}
+              <div className="relative aspect-[4/5] overflow-hidden bg-[#111] sm:aspect-[3/4] flex-shrink-0">
+                <img
+                  src={item.image}
+                  alt=""
+                  className="h-full w-full object-contain object-center transition duration-700 group-hover:scale-105"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent" />
                 <div className="absolute left-4 top-4 rounded-full bg-white/90 px-4 py-2 shadow-lg backdrop-blur">
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#ff8c42]">VERIFIED</p>
@@ -175,19 +184,89 @@ function TransformationsSection({ transformations }: { transformations: Transfor
                   </div>
                 </div>
               </div>
-              <div className="p-6">
-                <h3 className="text-[24px] font-black text-[#111] sm:text-[28px]">{item.name}</h3>
-                <p className="mt-4 text-[15px] leading-8 text-[#666]">{item.desc}</p>
-                <div className="mt-6 flex flex-wrap items-center gap-3">
+
+              {/* Card Body - BIGGER WITH HIDDEN SCROLLBAR */}
+              <div 
+                className="flex flex-col p-5 flex-shrink-0"
+                style={{ 
+                  height: "clamp(280px, 32vh, 320px)"
+                }}
+              >
+                {/* Title - Fixed height */}
+                <div className="flex-shrink-0" style={{ height: "clamp(64px, 8vh, 76px)", overflow: "hidden" }}>
+                  <h3 className="text-[20px] font-black text-[#111] leading-tight sm:text-[24px] lg:text-[26px] line-clamp-2">
+                    {item.name}
+                  </h3>
+                </div>
+
+                {/* Description - SCROLLABLE with HIDDEN SCROLLBAR */}
+                <div 
+                  className="flex-1 overflow-y-auto pr-1 mt-2 scroll-container-hide"
+                  style={{ 
+                    height: "clamp(120px, 14vh, 140px)", 
+                    minHeight: "clamp(120px, 14vh, 140px)", 
+                    maxHeight: "clamp(120px, 14vh, 140px)" 
+                  }}
+                >
+                  <p className="text-[14px] leading-6 text-[#666] sm:text-[15px] sm:leading-7 lg:text-[16px] lg:leading-7">
+                    {item.desc}
+                  </p>
+                </div>
+
+                {/* Badges - Fixed at bottom */}
+                <div className="flex flex-wrap items-center gap-2 pt-3 flex-shrink-0 mt-auto" style={{ height: "clamp(40px, 5vh, 48px)" }}>
                   {item.duration && (
-                    <div className="rounded-full bg-[#fff1e7] px-4 py-2 text-[11px] font-black uppercase tracking-[0.15em] text-[#ff8c42]">{item.duration}</div>
+                    <div className="rounded-full bg-[#fff1e7] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-[#ff8c42] sm:text-[11px] lg:text-[12px]">
+                      {item.duration}
+                    </div>
                   )}
-                  <div className="rounded-full bg-[#f5f5f5] px-4 py-2 text-[11px] font-black uppercase tracking-[0.15em] text-[#555]">REAL CLIENT</div>
+                  <div className="rounded-full bg-[#f5f5f5] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-[#555] sm:text-[11px] lg:text-[12px]">
+                    REAL CLIENT
+                  </div>
                 </div>
               </div>
             </div>
           ))}
         </div>
+
+        {/* Custom scrollbar styles - HIDDEN */}
+        <style>{`
+          /* Hide scrollbar for Chrome, Safari and Opera */
+          .scroll-container-hide::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+          }
+          
+          /* Hide scrollbar for Firefox */
+          .scroll-container-hide {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+          }
+          
+          /* Smooth scrolling */
+          .scroll-container-hide {
+            scroll-behavior: smooth;
+          }
+          
+          /* Optional: Show scrollbar on hover for desktop */
+          @media (hover: hover) {
+            .scroll-container-hide:hover::-webkit-scrollbar {
+              width: 3px;
+            }
+            .scroll-container-hide:hover::-webkit-scrollbar-track {
+              background: #f0f0f0;
+              border-radius: 10px;
+            }
+            .scroll-container-hide:hover::-webkit-scrollbar-thumb {
+              background: #ff8c42;
+              border-radius: 10px;
+            }
+            .scroll-container-hide:hover {
+              scrollbar-width: thin;
+              scrollbar-color: #ff8c42 #f0f0f0;
+            }
+          }
+        `}</style>
 
         <div className="mt-14 flex justify-center pb-4">
           <a
@@ -256,12 +335,6 @@ export default function HomePage() {
     <main className="overflow-hidden bg-[#f6f6f6] text-[#222]">
 
       {/* ================= HERO ================= */}
-      {/* 
-        FIX: object-cover + w-full + fixed height taaki image poori fill kare
-        Mobile:  h-[56vw]  → image apni natural ratio pe dikhe
-        Desktop: max-h-[92vh] → screen ka zyada hissa cover kare
-        min-h-[260px] → chhote phones pe bhi theek dikhe
-      */}
       <section className="relative w-full overflow-hidden bg-black">
         <img
           src={heroBanner.image}
@@ -271,9 +344,7 @@ export default function HomePage() {
         />
         <div className="absolute inset-0 bg-black/10" />
         <div className="absolute inset-0 z-10 flex items-center justify-center px-4">
-          <div className="text-center">
-            {/* heading */}
-          </div>
+          <div className="text-center" />
         </div>
       </section>
 
@@ -320,7 +391,7 @@ export default function HomePage() {
           <div className="text-center">
             <h2 className="text-3xl font-black sm:text-5xl">About DineshSehgal</h2>
             <p className="mx-auto mt-6 max-w-5xl text-[17px] leading-9 text-[#666] sm:text-[20px]">
-            Hi, I'm DINESH SEHGAL, a Certified Fitness Coach dedicated to helping people achieve life-changing transformations through science-based training, proper nutrition, and consistent guidance.
+              Hi, I'm DINESH SEHGAL, a Certified Fitness Coach dedicated to helping people achieve life-changing transformations through science-based training, proper nutrition, and consistent guidance.
             </p>
             <Link
               href="/about"
@@ -332,7 +403,6 @@ export default function HomePage() {
 
           {/* BMI SECTION */}
           <div className="mt-20 grid gap-10 lg:grid-cols-[0.4fr_0.6fr]">
-
             {/* LEFT */}
             <div className="rounded-[30px] border border-[#e5e5e5] bg-white p-6 shadow-lg sm:p-8">
               <div className="flex items-center gap-4">
@@ -440,7 +510,7 @@ export default function HomePage() {
 
       {/* ================= WHATSAPP FLOATING BUTTON ================= */}
       <a href={getWhatsappUrl()} target="_blank" className="fixed bottom-5 right-5 z-50">
-        <div className="flex h-[70px] w-[70px] items-center justify-center rounded-full bg-[#25D366] shadow-[0_15px_45px_rgba(37,211,102,0.45)] transition duration-300 hover:scale-105">
+        <div className="flex h-[70px] w-[70px] items-center justify-center rounded-full bg-[#25D366] shadow-[0_15px_45px_rgba(37,211,102,0.45)] transition duration-300 hover:scale-105 active:scale-95">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="white" className="h-9 w-9">
             <path d="M16.01 3C8.83 3 3 8.82 3 16c0 2.57.75 5.08 2.16 7.23L3 29l5.93-2.1A12.93 12.93 0 0016.01 29C23.18 29 29 23.18 29 16S23.18 3 16.01 3zm0 23.67c-2.13 0-4.22-.57-6.04-1.65l-.43-.25-3.52 1.25 1.15-3.62-.28-.45A10.58 10.58 0 015.33 16c0-5.89 4.79-10.68 10.68-10.68 2.85 0 5.52 1.11 7.54 3.13A10.59 10.59 0 0126.68 16c0 5.89-4.79 10.67-10.67 10.67zm5.86-7.94c-.32-.16-1.89-.93-2.18-1.04-.29-.11-.5-.16-.71.16-.21.32-.82 1.04-1.01 1.25-.18.21-.37.24-.69.08-.32-.16-1.35-.5-2.57-1.58-.95-.84-1.59-1.88-1.77-2.2-.18-.32-.02-.49.14-.65.14-.14.32-.37.48-.55.16-.18.21-.32.32-.53.11-.21.05-.4-.03-.55-.08-.16-.71-1.72-.98-2.35-.26-.62-.52-.54-.71-.55h-.61c-.21 0-.55.08-.84.4-.29.32-1.11 1.08-1.11 2.64 0 1.55 1.13 3.05 1.29 3.26.16.21 2.22 3.39 5.39 4.75.75.32 1.34.52 1.8.66.75.24 1.44.21 1.98.13.61-.09 1.89-.77 2.15-1.51.27-.74.27-1.38.19-1.51-.08-.13-.29-.21-.61-.37z" />
           </svg>
