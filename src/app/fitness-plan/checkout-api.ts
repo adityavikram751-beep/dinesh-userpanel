@@ -3,7 +3,7 @@ const CURRENT_USER_KEY = "fitness-current-user";
 
 type PurchasePayload = {
   course_id: string;
-  plantype: string;
+  category: string;
   full_name: string;
   age: number;
   sex: string;

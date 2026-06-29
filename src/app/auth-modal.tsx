@@ -244,8 +244,7 @@ export default function AuthModal() {
                 </div>
               </label>
               <p className="mt-1 px-1 text-[10px] sm:text-xs font-semibold leading-5 text-zinc-500">
-                Password must start with a capital letter and include _ @ number
-              </p>
+              Password must be at least 8 characters long, start with a capital letter, contain at least one number and one special character.              </p>
             </div>
           )}
 
@@ -311,8 +310,7 @@ export default function AuthModal() {
                 </div>
               </label>
               <p className="-mt-2 px-1 text-[10px] sm:text-xs font-semibold leading-5 text-zinc-500">
-                Password must start with a capital letter and include _ @ number
-              </p>
+              Password must be at least 8 characters long, start with a capital letter, contain at least one number and one special character.              </p>
               <label className="block text-sm font-semibold text-zinc-200">
                 Confirm Password
                 <div className="relative mt-2">

@@ -19,8 +19,8 @@ type PriceEntry = {
 
 type VideoPlan = {
   _id: string;
-  title?: string;        // optional
-  name?: string;         // added – API se 'name' aa raha hai
+  title?: string;
+  name?: string;
   price?: number | string;
   currencyCode?: string;
   allprice?: PriceEntry[];
@@ -35,7 +35,6 @@ type CheckoutStep = "form" | "payment" | "success";
 
 type CheckoutForm = {
   currencyCode: string;
-  plantype: string;
   name: string;
   age: string;
   sex: string;
@@ -49,11 +48,9 @@ type CheckoutForm = {
 // ================= CONSTANTS =================
 
 const WHATSAPP_NUMBER = "918585986111";
-const UPI_ID = "dineshsehgal@upi";
 
 const defaultCheckoutForm: CheckoutForm = {
   currencyCode: "INR",
-  plantype: "",
   name: "",
   age: "",
   sex: "",
@@ -80,7 +77,6 @@ function getCurrencySymbol(currencyCode?: string): string {
   }
 }
 
-// Helper to get plan display name (fallback)
 function getPlanDisplayName(plan: VideoPlan): string {
   return plan.name || plan.title || "Plan";
 }
@@ -205,10 +201,7 @@ export default function ConsultationPage() {
     useState<CheckoutForm>(defaultCheckoutForm);
   const [orderId, setOrderId] = useState("");
   const [paymentId, setPaymentId] = useState("");
-  const [paymentAmount, setPaymentAmount] = useState("");
-  const [paymentCurrency, setPaymentCurrency] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [paymentSubmitting, setPaymentSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState("");
 
@@ -256,8 +249,6 @@ export default function ConsultationPage() {
     setCheckoutForm(defaultCheckoutForm);
     setOrderId("");
     setPaymentId("");
-    setPaymentAmount("");
-    setPaymentCurrency("");
   }
 
   function closeCheckout() {
@@ -265,8 +256,6 @@ export default function ConsultationPage() {
     setCheckoutStep("form");
     setOrderId("");
     setPaymentId("");
-    setPaymentAmount("");
-    setPaymentCurrency("");
   }
 
   function updateCheckoutField(field: keyof CheckoutForm, value: string) {
@@ -288,15 +277,13 @@ export default function ConsultationPage() {
     setSubmitting(true);
 
     try {
-      const resolvedPrice = resolvePlanPrice(
-        selectedPlan,
-        checkoutForm.currencyCode
-      );
+      // 🔥 CATEGORY - aap chahe toh "video" ya "consultation" ya "diet" kuch bhi rakh sakte hain
+      // Yeh field UI mein nahi dikhegi, sirf payload mein bheji jayegi
+      const CATEGORY = "video"; // <- yahan category change karein
 
-      // STEP 1: Create payload for purchase
       const payload = {
         course_id: selectedPlan._id,
-        plantype: checkoutForm.plantype,
+        category: CATEGORY, // ✅ category bheji jayegi, UI mein nahi dikhegi
         full_name: checkoutForm.name,
         age: Number(checkoutForm.age),
         sex: checkoutForm.sex,
@@ -308,29 +295,23 @@ export default function ConsultationPage() {
         currencyCode: checkoutForm.currencyCode,
       };
 
-      // STEP 2: Call first API - Create purchase and get payment ID
-      console.log("🔄 Creating purchase...");
+      console.log("🔄 Creating purchase with payload:", payload);
       const purchase = await createPlanPurchase(payload);
       console.log("✅ Payment ID generated:", purchase.paymentId);
-      
-      // Store payment ID for later use
+
       setPaymentId(purchase.paymentId);
-      
-      // STEP 3: Call second API - Initiate payment with Razorpay
+
       console.log("🔄 Initiating payment with Razorpay...");
       const razorpayData = await initiatePlanPayment(purchase.paymentId);
       console.log("✅ Razorpay Order ID:", razorpayData.razorpayOrderId);
-      console.log("✅ Razorpay Key:", razorpayData.key);
-      console.log("✅ Amount:", razorpayData.amount);
 
-      // STEP 4: Open Razorpay checkout
       const options = {
         key: razorpayData.key,
         amount: razorpayData.amount,
         currency: razorpayData.currency,
         order_id: razorpayData.razorpayOrderId,
         name: "Dinesh Sehgal Fitness",
-        description: getPlanDisplayName(selectedPlan),  // updated
+        description: getPlanDisplayName(selectedPlan),
         prefill: {
           name: checkoutForm.name,
           email: checkoutForm.email,
@@ -341,26 +322,22 @@ export default function ConsultationPage() {
         },
         handler: async function (response: any) {
           console.log("💰 Payment Success:", response);
-          
-          // Store order and payment IDs
+
           setOrderId(response.razorpay_order_id);
           setPaymentId(response.razorpay_payment_id);
-          
-          // STEP 5: Verify payment on backend (optional but recommended)
+
           try {
             console.log("🔄 Verifying payment...");
             await verifyPayment({
               paymentId: response.razorpay_payment_id,
               orderId: response.razorpay_order_id,
-              signature: response.razorpay_signature
+              signature: response.razorpay_signature,
             });
             console.log("✅ Payment verified successfully!");
           } catch (err) {
             console.error("Verification error:", err);
-            // Still show success to user, but log error for debugging
           }
-          
-          // Show success page
+
           setCheckoutStep("success");
           showToast("✅ Payment Successful!");
         },
@@ -373,7 +350,6 @@ export default function ConsultationPage() {
 
       const razorpay = new (window as any).Razorpay(options);
       razorpay.open();
-      
     } catch (error: unknown) {
       console.error("Payment error:", error);
       showToast(
@@ -394,7 +370,6 @@ export default function ConsultationPage() {
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#f5f5f5] text-zinc-900">
-      
       {/* Toast Notification */}
       {toast && (
         <div
@@ -408,33 +383,27 @@ export default function ConsultationPage() {
       )}
 
       {/* ================= HERO ================= */}
-
       <section className="relative overflow-hidden bg-[#0b0f0d] text-white">
         <div className="absolute inset-0 bg-gradient-to-br from-[#07130d] via-[#0b0f0d] to-[#101010]" />
         <div className="absolute -left-24 top-0 h-[320px] w-[320px] rounded-full bg-emerald-500/20 blur-3xl" />
         <div className="absolute bottom-0 right-0 h-[320px] w-[320px] rounded-full bg-emerald-400/10 blur-3xl" />
 
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 py-14 sm:px-8 lg:grid-cols-2 lg:px-10 lg:py-24">
-          {/* LEFT */}
           <div>
             <p className="inline-flex rounded-full border border-emerald-400/20 bg-emerald-400/10 px-5 py-2 text-[10px] font-black uppercase tracking-[0.28em] text-emerald-300 sm:text-xs">
               PREMIUM ONLINE COACHING
             </p>
-
             <h1 className="mt-6 text-4xl font-black leading-[1.05] sm:text-5xl lg:text-7xl">
               Video
               <br />
               Consultation
             </h1>
-
             <p className="mt-6 max-w-2xl text-[15px] leading-8 text-zinc-300 sm:text-lg sm:leading-9">
               Get direct expert fitness guidance for fat loss, muscle building,
               nutrition planning, workout structure and complete body
               transformation.
             </p>
-
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-              {/* 🔁 Changed from <a> to <button> with scroll to pricing */}
               <button
                 onClick={scrollToPricing}
                 className="flex items-center justify-center rounded-2xl bg-emerald-400 px-7 py-4 text-sm font-black text-black shadow-[0_15px_40px_rgba(52,211,153,0.35)] transition duration-300 hover:scale-105 hover:bg-emerald-300 sm:text-base"
@@ -442,40 +411,28 @@ export default function ConsultationPage() {
                 Book Consultation
               </button>
             </div>
-
-            {/* STATS */}
             <div className="mt-12 grid grid-cols-3 gap-4">
               <div className="rounded-3xl border border-white/10 bg-white/5 p-5 text-center backdrop-blur">
                 <h3 className="text-3xl font-black">30</h3>
-                <p className="mt-1 text-xs text-zinc-300 sm:text-sm">
-                  Minutes
-                </p>
+                <p className="mt-1 text-xs text-zinc-300 sm:text-sm">Minutes</p>
               </div>
-
               <div className="rounded-3xl border border-white/10 bg-white/5 p-5 text-center backdrop-blur">
                 <h3 className="text-3xl font-black">1:1</h3>
-                <p className="mt-1 text-xs text-zinc-300 sm:text-sm">
-                  Coaching
-                </p>
+                <p className="mt-1 text-xs text-zinc-300 sm:text-sm">Coaching</p>
               </div>
-
               <div className="rounded-3xl border border-white/10 bg-white/5 p-5 text-center backdrop-blur">
                 <h3 className="text-3xl font-black">24/7</h3>
-                <p className="mt-1 text-xs text-zinc-300 sm:text-sm">
-                  Support
-                </p>
+                <p className="mt-1 text-xs text-zinc-300 sm:text-sm">Support</p>
               </div>
             </div>
           </div>
 
-          {/* RIGHT */}
           <div className="relative">
             <img
               src="/POASTER.jpeg"
               alt="consultation"
               className="h-[380px] w-full rounded-[40px] object-cover shadow-[0_30px_100px_rgba(0,0,0,0.4)] sm:h-[520px] lg:h-[700px]"
             />
-
             <div className="absolute bottom-5 left-5 rounded-3xl border border-white/10 bg-black/40 p-5 backdrop-blur-xl">
               <p className="text-sm text-zinc-300">Trusted By</p>
               <h3 className="mt-1 text-3xl font-black">500+ Clients</h3>
@@ -485,7 +442,6 @@ export default function ConsultationPage() {
       </section>
 
       {/* ================= WHAT YOU'LL GET ================= */}
-
       <section className="mx-auto max-w-7xl px-5 py-20 sm:px-8 lg:px-10">
         <div className="mb-14 text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.28em] text-emerald-600 backdrop-blur-sm mb-4">
@@ -503,7 +459,6 @@ export default function ConsultationPage() {
             fitness transformation.
           </p>
         </div>
-
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {whatYouGetFeatures.map((item) => (
             <div
@@ -513,20 +468,19 @@ export default function ConsultationPage() {
               <h3 className="text-lg font-black leading-tight text-zinc-900 transition-colors duration-300 group-hover:text-emerald-600">
                 {item.title}
               </h3>
-              <p className="mt-3 text-sm leading-6 text-zinc-500">
-                {item.desc}
-              </p>
+              <p className="mt-3 text-sm leading-6 text-zinc-500">{item.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* ================= PRICING SECTION ================= */}
-      {/* Added id="pricing-section" so the button can scroll here */}
-      <section id="pricing-section" className="mx-auto max-w-7xl px-5 pb-24 sm:px-8 lg:px-10">
+      <section
+        id="pricing-section"
+        className="mx-auto max-w-7xl px-5 pb-24 sm:px-8 lg:px-10"
+      >
         <div className="overflow-hidden rounded-[42px] bg-[#0f1110] text-white shadow-[0_30px_100px_rgba(0,0,0,0.2)]">
           <div className="grid items-start gap-10 lg:grid-cols-2">
-            {/* LEFT */}
             <div className="p-6 sm:p-8 lg:p-14">
               <p className="text-sm font-black uppercase tracking-[0.28em] text-emerald-300">
                 Pricing
@@ -542,7 +496,6 @@ export default function ConsultationPage() {
               </p>
             </div>
 
-            {/* RIGHT - Single Card */}
             <div className="p-6 sm:p-8 lg:p-14">
               {loading ? (
                 <div className="rounded-[32px] border border-white/10 bg-white/5 p-10 text-center">
@@ -566,9 +519,8 @@ export default function ConsultationPage() {
                       <div className="flex flex-col gap-4">
                         <div>
                           <p className="text-2xl sm:text-3xl font-black uppercase tracking-wider text-white">
-                            {getPlanDisplayName(plan)}   {/* updated */}
+                            {getPlanDisplayName(plan)}
                           </p>
-
                           <div className="mt-3 flex items-baseline gap-3">
                             <h3 className="text-4xl sm:text-5xl lg:text-6xl font-black">
                               {primaryPrice.symbol}
@@ -578,7 +530,6 @@ export default function ConsultationPage() {
                               {primaryPrice.currencyCode}
                             </span>
                           </div>
-
                           {otherPrices.length > 0 && (
                             <div className="flex flex-wrap gap-3 mt-4">
                               {otherPrices.map((p) => (
@@ -596,11 +547,9 @@ export default function ConsultationPage() {
                             </div>
                           )}
                         </div>
-
                         <div className="rounded-2xl bg-emerald-400/20 border border-emerald-400/30 px-4 py-2 sm:px-5 sm:py-3 text-sm font-black text-emerald-300 self-start whitespace-nowrap">
                           ⏱ {plan.duration || "30 MIN"}
                         </div>
-
                         <button
                           onClick={() => openCheckout(plan)}
                           className="mt-2 flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-400 to-emerald-500 px-6 py-4 text-sm font-black text-black shadow-lg shadow-emerald-500/30 transition duration-300 hover:scale-[1.02] hover:shadow-emerald-500/50"
@@ -625,15 +574,13 @@ export default function ConsultationPage() {
       {selectedPlan && resolvedCheckoutPrice && (
         <div className="fixed inset-0 z-[70] overflow-y-auto bg-black/70 px-4 py-6 backdrop-blur-sm sm:py-10">
           <div className="mx-auto max-w-4xl overflow-hidden rounded-[28px] bg-white shadow-[0_30px_90px_rgba(0,0,0,0.35)]">
-            
-            {/* MODAL HEADER */}
             <div className="flex items-start justify-between gap-5 border-b border-zinc-200 bg-zinc-950 px-6 py-6 text-white sm:px-8">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-300">
                   Secure Checkout
                 </p>
                 <h3 className="mt-3 text-2xl font-black sm:text-3xl">
-                  {getPlanDisplayName(selectedPlan)}   {/* updated */}
+                  {getPlanDisplayName(selectedPlan)}
                 </h3>
                 <p className="mt-2 text-sm text-zinc-300">
                   {resolvedCheckoutPrice.symbol}
@@ -650,7 +597,6 @@ export default function ConsultationPage() {
               </button>
             </div>
 
-            {/* STEP: FORM */}
             {checkoutStep === "form" && (
               <form
                 onSubmit={proceedToPayment}
@@ -661,29 +607,13 @@ export default function ConsultationPage() {
                     Plan Name
                   </span>
                   <input
-                    value={getPlanDisplayName(selectedPlan)}   // updated
+                    value={getPlanDisplayName(selectedPlan)}
                     readOnly
                     className="h-14 w-full rounded-2xl border border-zinc-200 bg-zinc-100 px-5 text-base font-black text-zinc-950 outline-none"
                   />
                 </label>
-                
-                <label className="sm:col-span-2">
-                  <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-zinc-500">
-                    Plan Type 
-                    </span>
-                  <select
-                    required
-                    value={checkoutForm.plantype}
-                    onChange={(e) =>
-                      updateCheckoutField("plantype", e.target.value)
-                    }
-                    className="h-14 w-full rounded-2xl border border-zinc-200 bg-white px-5 text-base font-bold text-zinc-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
-                  >
-                    <option value="">Select</option>
-                    <option value="transformationPlan">transformationPlan</option>
-                    <option value="videoPlan">videoPlan</option>
-                  </select>
-                </label>
+
+                {/* 🔥 category / plantype ka koi UI nahi hai – bilkul hidden */}
 
                 <label>
                   <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-zinc-500">
@@ -724,9 +654,7 @@ export default function ConsultationPage() {
                   <input
                     required
                     value={checkoutForm.name}
-                    onChange={(e) =>
-                      updateCheckoutField("name", e.target.value)
-                    }
+                    onChange={(e) => updateCheckoutField("name", e.target.value)}
                     className="h-14 w-full rounded-2xl border border-zinc-200 bg-white px-5 text-base font-semibold text-zinc-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
                     placeholder="Your full name"
                   />
@@ -741,9 +669,7 @@ export default function ConsultationPage() {
                     type="number"
                     min="10"
                     value={checkoutForm.age}
-                    onChange={(e) =>
-                      updateCheckoutField("age", e.target.value)
-                    }
+                    onChange={(e) => updateCheckoutField("age", e.target.value)}
                     className="h-14 w-full rounded-2xl border border-zinc-200 bg-white px-5 text-base font-semibold text-zinc-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
                     placeholder="Age"
                   />
@@ -756,9 +682,7 @@ export default function ConsultationPage() {
                   <select
                     required
                     value={checkoutForm.sex}
-                    onChange={(e) =>
-                      updateCheckoutField("sex", e.target.value)
-                    }
+                    onChange={(e) => updateCheckoutField("sex", e.target.value)}
                     className="h-14 w-full rounded-2xl border border-zinc-200 bg-white px-5 text-base font-bold text-zinc-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
                   >
                     <option value="">Select</option>
@@ -776,9 +700,7 @@ export default function ConsultationPage() {
                     required
                     type="email"
                     value={checkoutForm.email}
-                    onChange={(e) =>
-                      updateCheckoutField("email", e.target.value)
-                    }
+                    onChange={(e) => updateCheckoutField("email", e.target.value)}
                     className="h-14 w-full rounded-2xl border border-zinc-200 bg-white px-5 text-base font-semibold text-zinc-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
                     placeholder="you@example.com"
                   />
@@ -792,9 +714,7 @@ export default function ConsultationPage() {
                     required
                     inputMode="tel"
                     value={checkoutForm.mobile}
-                    onChange={(e) =>
-                      updateCheckoutField("mobile", e.target.value)
-                    }
+                    onChange={(e) => updateCheckoutField("mobile", e.target.value)}
                     className="h-14 w-full rounded-2xl border border-zinc-200 bg-white px-5 text-base font-semibold text-zinc-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
                     placeholder="Mobile number"
                   />
@@ -835,9 +755,7 @@ export default function ConsultationPage() {
                   <textarea
                     required
                     value={checkoutForm.goal}
-                    onChange={(e) =>
-                      updateCheckoutField("goal", e.target.value)
-                    }
+                    onChange={(e) => updateCheckoutField("goal", e.target.value)}
                     className="min-h-[96px] w-full resize-none rounded-2xl border border-zinc-200 bg-white px-5 py-4 text-base font-semibold text-zinc-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
                     placeholder="Fat loss, muscle gain, athletics, strength, etc."
                   />
@@ -855,9 +773,6 @@ export default function ConsultationPage() {
               </form>
             )}
 
-            {/* STEP: PAYMENT - REMOVED because Razorpay handles it */}
-
-            {/* STEP: SUCCESS */}
             {checkoutStep === "success" && (
               <div className="p-8 text-center sm:p-12">
                 <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-4xl font-black text-emerald-700">
@@ -870,7 +785,8 @@ export default function ConsultationPage() {
                   Your order has been submitted successfully.
                   {orderId && ` Order ID: ${orderId}`}
                   <br />
-                  Our team will verify the payment and contact you with onboarding details within 24 hours.
+                  Our team will verify the payment and contact you with
+                  onboarding details within 24 hours.
                 </p>
                 <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
                   <button
@@ -890,7 +806,11 @@ export default function ConsultationPage() {
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 min-h-[56px] rounded-2xl border border-zinc-300 px-8 text-sm font-black text-zinc-800 transition hover:bg-zinc-100"
                   >
-                    <svg viewBox="0 0 32 32" fill="currentColor" className="h-5 w-5 text-[#25D366]">
+                    <svg
+                      viewBox="0 0 32 32"
+                      fill="currentColor"
+                      className="h-5 w-5 text-[#25D366]"
+                    >
                       <path d="M16.01 3C8.83 3 3 8.82 3 16c0 2.57.75 5.08 2.16 7.23L3 29l5.93-2.1A12.93 12.93 0 0016.01 29C23.18 29 29 23.18 29 16S23.18 3 16.01 3zm0 23.67c-2.13 0-4.22-.57-6.04-1.65l-.43-.25-3.52 1.25 1.15-3.62-.28-.45A10.58 10.58 0 015.33 16c0-5.89 4.79-10.68 10.68-10.68 2.85 0 5.52 1.11 7.54 3.13A10.59 10.59 0 0126.68 16c0 5.89-4.79 10.67-10.67 10.67zm5.86-7.94c-.32-.16-1.89-.93-2.18-1.04-.29-.11-.5-.16-.71.16-.21.32-.82 1.04-1.01 1.25-.18.21-.37.24-.69.08-.32-.16-1.35-.5-2.57-1.58-.95-.84-1.59-1.88-1.77-2.2-.18-.32-.02-.49.14-.65.14-.14.32-.37.48-.55.16-.18.21-.32.32-.53.11-.21.05-.4-.03-.55-.08-.16-.71-1.72-.98-2.35-.26-.62-.52-.54-.71-.55h-.61c-.21 0-.55.08-.84.4-.29.32-1.11 1.08-1.11 2.64 0 1.55 1.13 3.05 1.29 3.26.16.21 2.22 3.39 5.39 4.75.75.32 1.34.52 1.8.66.75.24 1.44.21 1.98.13.61-.09 1.89-.77 2.15-1.51.27-.74.27-1.38.19-1.51-.08-.13-.29-.21-.61-.37z" />
                     </svg>
                     Chat with Support
@@ -903,7 +823,6 @@ export default function ConsultationPage() {
       )}
 
       {/* ================= FLOATING WHATSAPP ================= */}
-
       <a
         href={getSimpleWhatsappUrl()}
         target="_blank"
@@ -911,12 +830,7 @@ export default function ConsultationPage() {
         className="fixed bottom-5 right-5 z-50"
       >
         <div className="flex h-[60px] w-[60px] sm:h-[70px] sm:w-[70px] items-center justify-center rounded-full bg-[#25D366] shadow-[0_15px_45px_rgba(37,211,102,0.45)] transition duration-300 hover:scale-105">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 32 32"
-            fill="white"
-            className="h-8 w-8 sm:h-9 sm:w-9"
-          >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="white" className="h-9 w-9">
             <path d="M16.01 3C8.83 3 3 8.82 3 16c0 2.57.75 5.08 2.16 7.23L3 29l5.93-2.1A12.93 12.93 0 0016.01 29C23.18 29 29 23.18 29 16S23.18 3 16.01 3zm0 23.67c-2.13 0-4.22-.57-6.04-1.65l-.43-.25-3.52 1.25 1.15-3.62-.28-.45A10.58 10.58 0 015.33 16c0-5.89 4.79-10.68 10.68-10.68 2.85 0 5.52 1.11 7.54 3.13A10.59 10.59 0 0126.68 16c0 5.89-4.79 10.67-10.67 10.67zm5.86-7.94c-.32-.16-1.89-.93-2.18-1.04-.29-.11-.5-.16-.71.16-.21.32-.82 1.04-1.01 1.25-.18.21-.37.24-.69.08-.32-.16-1.35-.5-2.57-1.58-.95-.84-1.59-1.88-1.77-2.2-.18-.32-.02-.49.14-.65.14-.14.32-.37.48-.55.16-.18.21-.32.32-.53.11-.21.05-.4-.03-.55-.08-.16-.71-1.72-.98-2.35-.26-.62-.52-.54-.71-.55h-.61c-.21 0-.55.08-.84.4-.29.32-1.11 1.08-1.11 2.64 0 1.55 1.13 3.05 1.29 3.26.16.21 2.22 3.39 5.39 4.75.75.32 1.34.52 1.8.66.75.24 1.44.21 1.98.13.61-.09 1.89-.77 2.15-1.51.27-.74.27-1.38.19-1.51-.08-.13-.29-.21-.61-.37z" />
           </svg>
         </div>

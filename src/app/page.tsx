@@ -129,7 +129,7 @@ function mapTransformation(item: BannerApiItem, index: number) {
 const servicePlans = [
   {
     title: "Online Coaching",
-    image: "/online.png",
+    image: "/online 2.png",
     desc: "Customized workout plans to build muscle, burn fat, and stay consistent designed for your goals.",
     href: "/fitness-plan",
   },
@@ -141,7 +141,7 @@ const servicePlans = [
   },
   {
     title: "1-1 VIP Training",
-    image: "https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=1200&auto=format&fit=crop",
+    image: "/online 1.png",
     desc: "Exclusive 1-on-1 coaching with expert guidance, accountability and support.",
     href: "/fitness-plan/consultation",
   },

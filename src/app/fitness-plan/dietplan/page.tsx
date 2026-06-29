@@ -33,7 +33,7 @@ type CheckoutStep = "form" | "payment" | "success";
 
 type CheckoutForm = {
   currencyCode: string;
-  plantype: string;
+  category: string;        // ✅ hidden – payload mein bheja jayega
   name: string;
   age: string;
   sex: string;
@@ -47,11 +47,10 @@ type CheckoutForm = {
 // ================= CONSTANTS =================
 
 const WHATSAPP_NUMBER = "918585986111";
-const UPI_ID = "dineshsehgal@upi";
 
 const defaultCheckoutForm: CheckoutForm = {
   currencyCode: "INR",
-  plantype: "transformationPlan",
+  category: "diet",        // ✅ hidden – default "diet"
   name: "",
   age: "",
   sex: "",
@@ -157,13 +156,6 @@ Please share complete details 🙌`;
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
 
-function getAllPlansWhatsappUrl(plans: GymPlan[]) {
-  if (plans.length === 0) return getSimpleWhatsappUrl();
-  const plan = plans[0];
-  const resolved = resolvePlanPrice(plan, "INR");
-  return getPlanWhatsappUrl(plan, resolved.price, resolved.symbol);
-}
-
 // ================= MAIN PAGE =================
 
 export default function DietPlanPage() {
@@ -251,15 +243,10 @@ export default function DietPlanPage() {
     setSubmitting(true);
 
     try {
-      const resolvedPrice = resolvePlanPrice(
-        selectedPlan,
-        checkoutForm.currencyCode
-      );
-
-      // STEP 1: Create payload for purchase
+      // ✅ Payload – bilkul aapki dikhayi gayi JSON ke hisaab se
       const payload = {
         course_id: selectedPlan._id,
-        plantype: checkoutForm.plantype,
+        category: checkoutForm.category,   // ✅ "diet" – hidden
         full_name: checkoutForm.name,
         age: parseInt(checkoutForm.age),
         sex: checkoutForm.sex,
@@ -271,22 +258,16 @@ export default function DietPlanPage() {
         currencyCode: checkoutForm.currencyCode,
       };
 
-      // STEP 2: Call first API - Create purchase and get payment ID
-      console.log("🔄 Creating purchase...");
+      console.log("🔄 Creating purchase with payload:", payload);
       const purchase = await createPlanPurchase(payload);
       console.log("✅ Payment ID generated:", purchase.paymentId);
-      
-      // Store payment ID for later use
+
       setPaymentId(purchase.paymentId);
-      
-      // STEP 3: Call second API - Initiate payment with Razorpay
+
       console.log("🔄 Initiating payment with Razorpay...");
       const razorpayData = await initiatePlanPayment(purchase.paymentId);
       console.log("✅ Razorpay Order ID:", razorpayData.razorpayOrderId);
-      console.log("✅ Razorpay Key:", razorpayData.key);
-      console.log("✅ Amount:", razorpayData.amount);
 
-      // STEP 4: Open Razorpay checkout
       const options = {
         key: razorpayData.key,
         amount: razorpayData.amount,
@@ -304,26 +285,22 @@ export default function DietPlanPage() {
         },
         handler: async function (response: any) {
           console.log("💰 Payment Success:", response);
-          
-          // Store order and payment IDs
+
           setOrderId(response.razorpay_order_id);
           setPaymentId(response.razorpay_payment_id);
-          
-          // STEP 5: Verify payment on backend (optional but recommended)
+
           try {
             console.log("🔄 Verifying payment...");
             await verifyPayment({
               paymentId: response.razorpay_payment_id,
               orderId: response.razorpay_order_id,
-              signature: response.razorpay_signature
+              signature: response.razorpay_signature,
             });
             console.log("✅ Payment verified successfully!");
           } catch (err) {
             console.error("Verification error:", err);
-            // Still show success to user, but log error for debugging
           }
-          
-          // Show success page
+
           setCheckoutStep("success");
           showToast("✅ Payment Successful!");
         },
@@ -336,7 +313,6 @@ export default function DietPlanPage() {
 
       const razorpay = new (window as any).Razorpay(options);
       razorpay.open();
-      
     } catch (error: unknown) {
       console.error("Payment error:", error);
       showToast(
@@ -348,23 +324,6 @@ export default function DietPlanPage() {
       setSubmitting(false);
     }
   }
-
-  // ================= REMOVE THIS FUNCTION - NOT NEEDED =================
-  // async function confirmPaymentDone() {
-  //   setPaymentSubmitting(true);
-  //   try {
-  //     await initiatePlanPayment(paymentId);
-  //     setCheckoutStep("success");
-  //     showToast("Payment initiated successfully!");
-  //   } catch (error: unknown) {
-  //     console.error("Payment initiate error:", error);
-  //     showToast(
-  //       error instanceof Error ? error.message : "Payment failed. Please try again."
-  //     );
-  //   } finally {
-  //     setPaymentSubmitting(false);
-  //   }
-  // }
 
   const resolvedCheckoutPrice = selectedPlan
     ? resolvePlanPrice(selectedPlan, checkoutForm.currencyCode)
@@ -506,11 +465,6 @@ export default function DietPlanPage() {
                         <h3 className="text-lg sm:text-2xl font-bold text-white truncate">
                           {mainPlan.name}
                         </h3>
-                        {/* {mainPlan.description && (
-                          <p className="mt-0.5 text-[10px] sm:text-sm text-slate-300 truncate">
-                            {mainPlan.description}
-                          </p>
-                        )} */}
                       </div>
                       <div className="shrink-0 flex items-center gap-1 rounded-lg sm:rounded-xl bg-white/10 px-2 sm:px-3 py-1 sm:py-2">
                         <svg className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -592,8 +546,6 @@ export default function DietPlanPage() {
                       >
                         Buy Now - Start Your Journey
                       </button>
-
-                  
                     </div>
                   </div>
                 </div>
@@ -653,23 +605,7 @@ export default function DietPlanPage() {
                   />
                 </label>
                
-                <label className="sm:col-span-2">
-                  <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-zinc-500">
-                    Plan Type 
-                    </span>
-                  <select
-                    required
-                    value={checkoutForm.plantype}
-                    onChange={(e) =>
-                      updateCheckoutField("plantype", e.target.value)
-                    }
-                    className="h-14 w-full rounded-2xl border border-zinc-200 bg-white px-5 text-base font-bold text-zinc-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
-                  >
-                    <option value="">Select</option>
-                    <option value="transformationPlan">transformationPlan</option>
-                    <option value="videoPlan">videoPlan</option>
-                  </select>
-                </label>
+                {/* 🔥 category / plantype – UI में कुछ नहीं दिखेगा, bas payload में जाएगा */}
 
                 <label>
                   <span className="mb-1 block text-[10px] sm:text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
@@ -827,7 +763,6 @@ export default function DietPlanPage() {
               </form>
             )}
 
-            {/* STEP: PAYMENT - REMOVED because Razorpay handles it */}
             {/* STEP: SUCCESS */}
             {checkoutStep === "success" && (
               <div className="p-6 sm:p-8 text-center sm:p-12">
@@ -880,13 +815,8 @@ export default function DietPlanPage() {
         rel="noopener noreferrer"
         className="fixed bottom-4 right-4 z-50 sm:bottom-5 sm:right-5"
       >
-        <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-[#25D366] shadow-lg shadow-[#25D366]/30 transition hover:scale-105">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 32 32"
-            fill="white"
-            className="h-6 w-6 sm:h-7 sm:w-7"
-          >
+       <div className="flex h-[70px] w-[70px] items-center justify-center rounded-full bg-[#25D366] shadow-[0_15px_45px_rgba(37,211,102,0.45)] transition duration-300 hover:scale-105 active:scale-95">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="white" className="h-9 w-9">
             <path d="M16.01 3C8.83 3 3 8.82 3 16c0 2.57.75 5.08 2.16 7.23L3 29l5.93-2.1A12.93 12.93 0 0016.01 29C23.18 29 29 23.18 29 16S23.18 3 16.01 3zm0 23.67c-2.13 0-4.22-.57-6.04-1.65l-.43-.25-3.52 1.25 1.15-3.62-.28-.45A10.58 10.58 0 015.33 16c0-5.89 4.79-10.68 10.68-10.68 2.85 0 5.52 1.11 7.54 3.13A10.59 10.59 0 0126.68 16c0 5.89-4.79 10.67-10.67 10.67zm5.86-7.94c-.32-.16-1.89-.93-2.18-1.04-.29-.11-.5-.16-.71.16-.21.32-.82 1.04-1.01 1.25-.18.21-.37.24-.69.08-.32-.16-1.35-.5-2.57-1.58-.95-.84-1.59-1.88-1.77-2.2-.18-.32-.02-.49.14-.65.14-.14.32-.37.48-.55.16-.18.21-.32.32-.53.11-.21.05-.4-.03-.55-.08-.16-.71-1.72-.98-2.35-.26-.62-.52-.54-.71-.55h-.61c-.21 0-.55.08-.84.4-.29.32-1.11 1.08-1.11 2.64 0 1.55 1.13 3.05 1.29 3.26.16.21 2.22 3.39 5.39 4.75.75.32 1.34.52 1.8.66.75.24 1.44.21 1.98.13.61-.09 1.89-.77 2.15-1.51.27-.74.27-1.38.19-1.51-.08-.13-.29-.21-.61-.37z" />
           </svg>
         </div>

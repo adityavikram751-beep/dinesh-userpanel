@@ -33,7 +33,7 @@ type CheckoutStep = "form" | "payment" | "success";
 
 type CheckoutForm = {
   currencyCode: string;
-  plantype: string;
+  category: string;        // ✅ hidden – payload mein bheja jayega
   name: string;
   age: string;
   sex: string;
@@ -51,7 +51,7 @@ const UPI_ID = "dineshsehgal@upi";
 
 const defaultCheckoutForm: CheckoutForm = {
   currencyCode: "INR",
-  plantype: "",
+  category: "transformation",   // ✅ hidden – default "transformation"
   name: "",
   age: "",
   sex: "",
@@ -383,9 +383,10 @@ export default function FitnessPlanPage() {
       );
 
       // STEP 1: Create payload for purchase
+      // ✅ category bheja ja raha hai (UI mein nahi dikhta)
       const payload = {
         course_id: selectedPlan._id,
-        plantype : checkoutForm.plantype,
+        category: checkoutForm.category,   // "transformation"
         full_name: checkoutForm.name,
         age: Number(checkoutForm.age),
         sex: checkoutForm.sex,
@@ -543,7 +544,6 @@ export default function FitnessPlanPage() {
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:mt-10 sm:flex-row sm:gap-4">
-              {/* 🔁 Changed from <a> to <button> with scroll to plans */}
               <button
                 onClick={scrollToPlans}
                 className="rounded-2xl bg-gradient-to-r from-emerald-400 to-emerald-500 px-6 py-3 text-center text-sm font-black text-black shadow-xl shadow-emerald-500/30 transition duration-300 hover:scale-105 hover:shadow-emerald-500/50 sm:px-7 sm:py-4 sm:text-base"
@@ -616,7 +616,6 @@ export default function FitnessPlanPage() {
       </section>
 
       {/* ================= PLANS ================= */}
-      {/* Added id="plans-section" so the button can scroll here */}
       <section id="plans-section" className="mx-auto max-w-7xl px-5 pb-20 sm:px-8 sm:pb-28 lg:px-10">
         <div className="mb-10 text-center sm:mb-14">
           <h2 className="text-3xl font-black sm:text-5xl lg:text-6xl">
@@ -684,23 +683,8 @@ export default function FitnessPlanPage() {
                     className="h-14 w-full rounded-2xl border border-zinc-200 bg-zinc-100 px-5 text-base font-black text-zinc-950 outline-none"
                   />
                 </label>
-                <label className="sm:col-span-2">
-                  <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-zinc-500">
-                    Plan Type 
-                    </span>
-                  <select
-                    required
-                    value={checkoutForm.plantype}
-                    onChange={(e) =>
-                      updateCheckoutField("plantype", e.target.value)
-                    }
-                    className="h-14 w-full rounded-2xl border border-zinc-200 bg-white px-5 text-base font-bold text-zinc-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
-                  >
-                    <option value="">Select</option>
-                    <option value="transformationPlan">transformationPlan</option>
-                    <option value="videoPlan">videoPlan</option>
-                  </select>
-                </label>
+
+                {/* 🔥 Plan Type dropdown complete remove kar diya – UI mein nahi dikhega */}
 
                 <label>
                   <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-zinc-500">
@@ -853,8 +837,6 @@ export default function FitnessPlanPage() {
                 </div>
               </form>
             )}
-
-            {/* STEP: PAYMENT - REMOVED because Razorpay handles it */}
 
             {/* STEP: SUCCESS */}
             {checkoutStep === "success" && (
