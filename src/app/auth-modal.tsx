@@ -31,6 +31,23 @@ export default function AuthModal() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Password validation function (client-side)
+  const validatePassword = (pwd: string): string | null => {
+    if (pwd.length < 8) {
+      return "Password must be at least 8 characters long.";
+    }
+    if (!/[A-Z]/.test(pwd)) {
+      return "Password must contain at least one uppercase letter.";
+    }
+    if (!/[0-9]/.test(pwd)) {
+      return "Password must contain at least one number.";
+    }
+    if (!/[@]/.test(pwd)) {
+      return 'Password must contain an "@" symbol.';
+    }
+    return null; // valid
+  };
+
   useEffect(() => {
     if (!authModalOpen) return;
     const resetTimer = window.setTimeout(() => {
@@ -79,6 +96,13 @@ export default function AuthModal() {
     }
 
     if (authMode === "signup") {
+      // Validate password before calling signup
+      const pwdError = validatePassword(password);
+      if (pwdError) {
+        setMessage(pwdError);
+        setIsSubmitting(false);
+        return;
+      }
       const result = await signup(name, email, password);
       setMessage(result.message);
       setIsSubmitting(false);
@@ -108,8 +132,17 @@ export default function AuthModal() {
         return;
       }
 
+      // Forgot password -> set new password
       if (newPassword !== confirmPassword) {
         setMessage("New password and confirm password do not match.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Validate newPassword
+      const pwdError = validatePassword(newPassword);
+      if (pwdError) {
+        setMessage(pwdError);
         setIsSubmitting(false);
         return;
       }
@@ -244,7 +277,8 @@ export default function AuthModal() {
                 </div>
               </label>
               <p className="mt-1 px-1 text-[10px] sm:text-xs font-semibold leading-5 text-zinc-500">
-              Password must be at least 8 characters long, start with a capital letter, contain at least one number.              </p>
+                Password must be at least 8 characters, include at least one uppercase letter, one number, and one "@" symbol.
+              </p>
             </div>
           )}
 
@@ -310,7 +344,8 @@ export default function AuthModal() {
                 </div>
               </label>
               <p className="-mt-2 px-1 text-[10px] sm:text-xs font-semibold leading-5 text-zinc-500">
-              Password must be at least 8 characters long, start with a capital letter, contain at least one number.              </p>
+                Password must be at least 8 characters, include at least one uppercase letter, one number, and one "@" symbol.
+              </p>
               <label className="block text-sm font-semibold text-zinc-200">
                 Confirm Password
                 <div className="relative mt-2">

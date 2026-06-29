@@ -37,10 +37,19 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const API_BASE_URL = "https://api.dineshsehgal.com";
 const CURRENT_USER_KEY = "fitness-current-user";
-export const PASSWORD_RULE_MESSAGE = "Password must be at least 8 characters long, start with a capital letter, contain at least one number.";
 
-function isValidPassword(password: string) {
-  return /^[A-Z](?=.*_)(?=.*@)(?=.*\d).{5,}$/.test(password);
+// ✅ UPDATED password rule message
+export const PASSWORD_RULE_MESSAGE =
+  "Password must be at least 8 characters long, include at least one uppercase letter, one number, and one '@' symbol.";
+
+// ✅ UPDATED validation – no underscore, length >= 8
+function isValidPassword(password: string): boolean {
+  return (
+    password.length >= 8 &&
+    /[A-Z]/.test(password) &&
+    /[0-9]/.test(password) &&
+    /[@]/.test(password)
+  );
 }
 
 function normalizeEmail(email: string) {
@@ -134,8 +143,6 @@ function buildUser(data: unknown, fallbackEmail: string, fallbackName?: string):
 
   if (!token) {
     console.warn("⚠️ No token found in response. Available keys:", Object.keys(isRecord(data) ? data : {}));
-    // Optionally throw an error if token is mandatory
-    // throw new Error("Token missing in response. Authentication failed.");
   }
 
   const email =
@@ -226,9 +233,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!name.trim() || !email.trim() || !password.trim()) {
       return { success: false, message: "Please fill all fields to create an account." };
     }
-    if (password.length < 6) {
-      return { success: false, message: "Password should be at least 6 characters." };
-    }
+    // ✅ Use updated validation
     if (!isValidPassword(password)) {
       return { success: false, message: PASSWORD_RULE_MESSAGE };
     }
@@ -304,9 +309,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!newPassword.trim()) {
       return { success: false, message: "Please enter a new password." };
     }
-    if (newPassword.length < 6) {
-      return { success: false, message: "Password should be at least 6 characters." };
-    }
+    // ✅ Use updated validation
     if (!isValidPassword(newPassword)) {
       return { success: false, message: PASSWORD_RULE_MESSAGE };
     }
