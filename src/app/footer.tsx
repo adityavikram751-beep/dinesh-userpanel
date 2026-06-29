@@ -93,38 +93,40 @@ export default function Footer() {
 
       <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-3 pt-8">
 
-        {/* LEFT IMAGE */}
-        <div
-          className={`flex flex-col ${base} ${visible ? show : hidden}`}
-          style={{ transitionDelay: "0ms" }}
-        >
-          <div className="relative overflow-hidden rounded-xl border border-white/20 shadow-xl shadow-black/20 group">
-            <img
-              src="/footer 1.jpeg"
-              alt="fitness"
-              className="h-[180px] sm:h-[220px] lg:h-[280px] w-full object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          </div>
-          <p className="mt-auto pt-3 text-sm font-bold text-white/90">
-            &quot;Ready To Lose Fat, DineshSehgal Me&quot;
-          </p>
-        </div>
+      {/* LEFT IMAGE */}
+<div
+  className={`flex flex-col ${base} ${visible ? show : hidden}`}
+  style={{ transitionDelay: "0ms" }}
+>
+  <div className="relative overflow-hidden rounded-xl border border-white/20 shadow-xl shadow-black/20 group aspect-[3/4]">
+    {/* ↑ added aspect-[3/4] (portrait) – adjust to your preference */}
+    <img
+      src="/footer 4.jpeg"
+      alt="fitness"
+      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+      // removed fixed height classes
+    />
+    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+  </div>
+  <p className="mt-auto pt-3 text-sm font-bold text-white/90">
+    &quot;Ready To Lose Fat, DineshSehgal Me&quot;
+  </p>
+</div>
 
-        {/* CENTER IMAGE */}
-        <div
-          className={`${base} ${visible ? show : hidden}`}
-          style={{ transitionDelay: "150ms" }}
-        >
-          <div className="relative overflow-hidden rounded-xl border border-white/20 shadow-xl shadow-black/20 group">
-            <img
-              src="/footer 2.jpeg"
-              alt="coach"
-              className="h-[180px] sm:h-[220px] lg:h-[280px] w-full object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          </div>
-        </div>
+{/* CENTER IMAGE */}
+<div
+  className={`${base} ${visible ? show : hidden}`}
+  style={{ transitionDelay: "150ms" }}
+>
+  <div className="relative overflow-hidden rounded-xl border border-white/20 shadow-xl shadow-black/20 group aspect-[3/4]">
+    <img
+      src="/footer 3.jpeg"
+      alt="coach"
+      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+    />
+    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+  </div>
+</div>
 
         {/* RIGHT — FORM CARD */}
         <div
