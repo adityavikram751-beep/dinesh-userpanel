@@ -129,7 +129,7 @@ function mapTransformation(item: BannerApiItem, index: number) {
 const servicePlans = [
   {
     title: "Online Coaching",
-    image: "/onlinr.png",
+    image: "/online.png",
     desc: "Customized workout plans to build muscle, burn fat, and stay consistent designed for your goals.",
     href: "/fitness-plan",
   },
