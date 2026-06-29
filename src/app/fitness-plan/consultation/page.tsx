@@ -273,6 +273,14 @@ export default function ConsultationPage() {
     setCheckoutForm((prev) => ({ ...prev, [field]: value }));
   }
 
+  // ================= SCROLL TO PRICING =================
+  function scrollToPricing() {
+    const section = document.getElementById("pricing-section");
+    if (section) {
+      section.scrollIntoView({ behavior: "smooth" });
+    }
+  }
+
   // ================= MAIN PAYMENT FUNCTION =================
   async function proceedToPayment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -426,14 +434,13 @@ export default function ConsultationPage() {
             </p>
 
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-              <a
-                href={getSimpleWhatsappUrl()}
-                target="_blank"
-                rel="noopener noreferrer"
+              {/* 🔁 Changed from <a> to <button> with scroll to pricing */}
+              <button
+                onClick={scrollToPricing}
                 className="flex items-center justify-center rounded-2xl bg-emerald-400 px-7 py-4 text-sm font-black text-black shadow-[0_15px_40px_rgba(52,211,153,0.35)] transition duration-300 hover:scale-105 hover:bg-emerald-300 sm:text-base"
               >
                 Book Consultation
-              </a>
+              </button>
             </div>
 
             {/* STATS */}
@@ -515,8 +522,8 @@ export default function ConsultationPage() {
       </section>
 
       {/* ================= PRICING SECTION ================= */}
-
-      <section className="mx-auto max-w-7xl px-5 pb-24 sm:px-8 lg:px-10">
+      {/* Added id="pricing-section" so the button can scroll here */}
+      <section id="pricing-section" className="mx-auto max-w-7xl px-5 pb-24 sm:px-8 lg:px-10">
         <div className="overflow-hidden rounded-[42px] bg-[#0f1110] text-white shadow-[0_30px_100px_rgba(0,0,0,0.2)]">
           <div className="grid items-start gap-10 lg:grid-cols-2">
             {/* LEFT */}

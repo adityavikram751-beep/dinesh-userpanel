@@ -362,6 +362,14 @@ export default function FitnessPlanPage() {
     setCheckoutForm((prev) => ({ ...prev, [field]: value }));
   }
 
+  // ================= SCROLL TO PLANS =================
+  function scrollToPlans() {
+    const section = document.getElementById("plans-section");
+    if (section) {
+      section.scrollIntoView({ behavior: "smooth" });
+    }
+  }
+
   // ================= MAIN PAYMENT FUNCTION =================
   async function proceedToPayment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -535,14 +543,13 @@ export default function FitnessPlanPage() {
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:mt-10 sm:flex-row sm:gap-4">
-              <a
-                href={getSimpleWhatsappUrl()}
-                target="_blank"
-                rel="noopener noreferrer"
+              {/* 🔁 Changed from <a> to <button> with scroll to plans */}
+              <button
+                onClick={scrollToPlans}
                 className="rounded-2xl bg-gradient-to-r from-emerald-400 to-emerald-500 px-6 py-3 text-center text-sm font-black text-black shadow-xl shadow-emerald-500/30 transition duration-300 hover:scale-105 hover:shadow-emerald-500/50 sm:px-7 sm:py-4 sm:text-base"
               >
                 Start Transformation
-              </a>
+              </button>
             </div>
 
             {/* STATS */}
@@ -609,7 +616,8 @@ export default function FitnessPlanPage() {
       </section>
 
       {/* ================= PLANS ================= */}
-      <section className="mx-auto max-w-7xl px-5 pb-20 sm:px-8 sm:pb-28 lg:px-10">
+      {/* Added id="plans-section" so the button can scroll here */}
+      <section id="plans-section" className="mx-auto max-w-7xl px-5 pb-20 sm:px-8 sm:pb-28 lg:px-10">
         <div className="mb-10 text-center sm:mb-14">
           <h2 className="text-3xl font-black sm:text-5xl lg:text-6xl">
             Choose Your <span className="text-emerald-500">Plan</span>
