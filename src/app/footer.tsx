@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useRef } from "react";
 import Link from "next/link";   // ✅ Link import
 
 const baseUrl = "https://api.dineshsehgal.com";
+const initialFormData = { name: "", email: "", mobile: "", message: "" };
 
 export default function Footer() {
   const [num1, setNum1] = useState(0);
@@ -12,7 +13,8 @@ export default function Footer() {
   const [loading, setLoading] = useState(false);
   const [visible, setVisible] = useState(false);
   const [spinRefresh, setSpinRefresh] = useState(false);
-  const [formData, setFormData] = useState({ name: "", email: "", mobile: "", message: "" });
+  const [formData, setFormData] = useState(initialFormData);
+  const [formKey, setFormKey] = useState(0);
   const footerRef = useRef<HTMLElement>(null);
 
   const generateNumbers = useCallback(() => {
@@ -40,6 +42,13 @@ export default function Footer() {
     setFormData((prev) => ({ ...prev, [name]: nextValue }));
   }
 
+  function resetForm() {
+    setFormData({ ...initialFormData });
+    setAnswer("");
+    setFormKey((prev) => prev + 1);
+    generateNumbers();
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (formData.mobile.length !== 10) { alert("Mobile number 10 digit ka hona chahiye"); return; }
@@ -58,11 +67,9 @@ export default function Footer() {
         body: JSON.stringify(enquiryPayload),
       });
       const data = await res.json();
-      if (data.success) {
-        alert("Enquiry Submitted ✅");
-        setFormData({ name: "", email: "", mobile: "", message: "" });
-        setAnswer("");
-        generateNumbers();
+      if (res.ok && data.success !== false) {
+        alert(data.message || "Enquiry Submitted ✅");
+        resetForm();
       } else {
         alert(data.message || "Submission failed ❌");
       }
@@ -140,7 +147,7 @@ export default function Footer() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <form key={formKey} onSubmit={handleSubmit} className="flex flex-col gap-3">
 
             {/* NAME + EMAIL */}
             <div
